@@ -1,12 +1,10 @@
 /* Standard includes. */
 #include <stdio.h>
 
-#include "basictask.h"
 #include "AHRS.h"
 #include "OSConfig.h"
 
 /* Library includes. */
-#include "UART.h"
 #include "spi.h"
 #include "ledTask.h"
 #include "flashTask.h"

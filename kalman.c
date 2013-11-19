@@ -3,7 +3,6 @@
 #include <arm_math.h>
 #include <string.h>
 #include "axisTrans.h"
-#include "uart.h"
 
 ekf_filter ekf_filter_new(u8 state_dim,
 			u8 measure_dim,
