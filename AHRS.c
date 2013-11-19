@@ -37,29 +37,25 @@ __inline void AHRS_Read_SPI_Acc(float *acc)
 	AHRS_EXIT_CRITICAL();
 }
 
-/*must guarantee plenty of time between two I2C communication triggers*/
-__inline void AHRS_Read_I2C_Acc(float *acc, u8 delay_ms)
+__inline void AHRS_Read_I2C_Acc(float *acc)
 {	
 	User_I2C_BufferRead(LSM_A_I2C_ADDRESS, sensor_raw, LSM_A_OUT_X_L_ADDR | 0x80, 6);
 	LSM303DLH_Raw2Acc(sensor_raw+6, acc);
-	if(delay_ms > 0)
-		vTaskDelay((portTickType)delay_ms/portTICK_RATE_MS);	
+	vTaskDelay((portTickType)2/portTICK_RATE_MS);	
 }
 
-__inline void AHRS_Read_I2C_Gyr(float *gyr, u8 delay_ms)
+__inline void AHRS_Read_I2C_Gyr(float *gyr)
 {
 	User_I2C_BufferRead(ITG_I2C_ADDRESS, sensor_raw, ITG_XOUT_H_ADDR, 6);
 	ITG_Raw2Gyro(sensor_raw, gyr);
-	if(delay_ms > 0)
-		vTaskDelay((portTickType)delay_ms/portTICK_RATE_MS);	
+	vTaskDelay((portTickType)1/portTICK_RATE_MS);
 }
 
-__inline void AHRS_Read_I2C_Mag(s16 *mag, u8 delay_ms)
+__inline void AHRS_Read_I2C_Mag(s16 *mag)
 {
 	User_I2C_BufferRead(LSM_M_I2C_ADDRESS, sensor_raw, LSM_M_OUT_X_H_ADDR | 0x80, 6);
 	LSM303DLH_Raw2Mag(sensor_raw+12, mag);
-	if(delay_ms > 0)
-		vTaskDelay((portTickType)delay_ms/portTICK_RATE_MS);	
+	vTaskDelay((portTickType)1/portTICK_RATE_MS);
 }
 
 void vAHRSConfig(void* pvParameters)
@@ -161,15 +157,15 @@ void vAHRSCali(void* pvParameters)
 	UMat.pData = U;
 
 	Blinks(LED1,3);//indicate calibration process begin
-	vTaskDelay((portTickType)2000/portTICK_RATE_MS);
+	vTaskDelay((portTickType)5000/portTICK_RATE_MS);
 	
 	/*refresh sensor data*/
-	AHRS_Read_I2C_Gyr(gyro,1);
+	AHRS_Read_I2C_Gyr(gyro);
 	
 	Blinks(LED1,2);//indicate collecting data
 	for(i=0;i<100;i++)
 	{
-		AHRS_Read_I2C_Gyr(gyro,0);
+		AHRS_Read_I2C_Gyr(gyro);
 		buffer[i]=gyro[0];
 		vTaskDelay((portTickType)20/portTICK_RATE_MS);
 	}
@@ -181,7 +177,7 @@ void vAHRSCali(void* pvParameters)
 	{
 		for(i=0;i<100;i++)
 		{
-			AHRS_Read_I2C_Gyr(gyro,0);
+			AHRS_Read_I2C_Gyr(gyro);
 			buffer[i]=gyro[0];
 			vTaskDelay((portTickType)20/portTICK_RATE_MS);
 		}
@@ -206,7 +202,7 @@ void vAHRSCali(void* pvParameters)
 	{
 		for(i=0;i<100;i++)
 		{
-			AHRS_Read_I2C_Gyr(gyro,0);
+			AHRS_Read_I2C_Gyr(gyro);
 			buffer[i]=gyro[0];
 			vTaskDelay((portTickType)20/portTICK_RATE_MS);
 		}
@@ -231,7 +227,7 @@ void vAHRSCali(void* pvParameters)
 	{
 		for(i=0;i<100;i++)
 		{
-			AHRS_Read_I2C_Gyr(gyro,0);
+			AHRS_Read_I2C_Gyr(gyro);
 			buffer[i]=gyro[0];
 			vTaskDelay((portTickType)20/portTICK_RATE_MS);
 		}
@@ -256,7 +252,7 @@ void vAHRSCali(void* pvParameters)
 	{
 		for(i=0;i<100;i++)
 		{
-			AHRS_Read_I2C_Gyr(gyro,0);
+			AHRS_Read_I2C_Gyr(gyro);
 			buffer[i]=gyro[0];
 			vTaskDelay((portTickType)20/portTICK_RATE_MS);
 		}
@@ -281,7 +277,7 @@ void vAHRSCali(void* pvParameters)
 	{
 		for(i=0;i<100;i++)
 		{
-			AHRS_Read_I2C_Gyr(gyro,0);
+			AHRS_Read_I2C_Gyr(gyro);
 			buffer[i]=gyro[0];
 			vTaskDelay((portTickType)20/portTICK_RATE_MS);
 		}
@@ -306,7 +302,7 @@ void vAHRSCali(void* pvParameters)
 	{
 		for(i=0;i<100;i++)
 		{
-			AHRS_Read_I2C_Gyr(gyro,0);
+			AHRS_Read_I2C_Gyr(gyro);
 			buffer[i]=gyro[0];
 			vTaskDelay((portTickType)20/portTICK_RATE_MS);
 		}
@@ -425,7 +421,7 @@ void vAHRSReadRaw(void* pvParameters)
 	xLastReadTime=xTaskGetTickCount();
 	for(;;)
 	{
-		AHRS_Read_I2C_Gyr(gyr, 1);
+		AHRS_Read_I2C_Gyr(gyr);
 		AHRS_Read_SPI_Acc(acc);
 		
 		sdt.acc[0] = K[0]*(acc[0]-bias_a[0])+K[1]*(acc[1]-bias_a[1])+K[2]*(acc[2]-bias_a[2]);
@@ -461,7 +457,7 @@ void vAHRSReadRaw(void* pvParameters)
 		if(CNT++>10)
 		{
 			CNT=0;
-			AHRS_Read_I2C_Mag(sdt.mag,0);
+			AHRS_Read_I2C_Mag(sdt.mag);
 		}
 
 		for(i=0;i<3;i++) comt.data[i]=(s16)(sdt.gyr[i]*4000.0);
@@ -555,7 +551,7 @@ void Gyro_Cali(float* gyro_offset)
 
 	for(i=0;i<1000;i++)
 	{
-		AHRS_Read_I2C_Gyr(rawData,0);
+		AHRS_Read_I2C_Gyr(rawData);
 		
 		for(j=0;j<3;j++)
 			sum[j]+=rawData[j];
