@@ -37,24 +37,24 @@ int main( void )
 					,mainFLASH_TASK_PRIORITY
 					,(xTaskHandle *)NULL);
 
-		xTaskCreate(vFlashTask
-		            ,(signed char *)"flash"
-					,configMINIMAL_STACK_SIZE+128
-					,NULL
-					,mainFLASH_TASK_PRIORITY+2
-					,(xTaskHandle *)NULL);
+//		xTaskCreate(vFlashTask
+//		            ,(signed char *)"flash"
+//					,configMINIMAL_STACK_SIZE+128
+//					,NULL
+//					,mainFLASH_TASK_PRIORITY+2
+//					,(xTaskHandle *)NULL);
 //		xTaskCreate(vI2CTest
 //		            ,(signed char *)"i2c"
 //					,configMINIMAL_STACK_SIZE+128
 //					,NULL
 //					,mainFLASH_TASK_PRIORITY+2
 //					,(xTaskHandle *)NULL);
-		xTaskCreate(vAHRSConfig
-		            ,(signed char *)"ahrs_config"
-					,configMINIMAL_STACK_SIZE+128
-					,NULL
-					,mainFLASH_TASK_PRIORITY+3
-					,(xTaskHandle *)NULL);
+//		xTaskCreate(vAHRSConfig
+//		            ,(signed char *)"ahrs_config"
+//					,configMINIMAL_STACK_SIZE+128
+//					,NULL
+//					,mainFLASH_TASK_PRIORITY+3
+//					,(xTaskHandle *)NULL);
 //		xTaskCreate(vAEKFProcessTask
 //		            ,(signed char *)"ahrs_ekf"
 //					,configMINIMAL_STACK_SIZE+256
@@ -83,6 +83,8 @@ void vApplicationIdleHook(void)
 static void prvSetupHardware( void )
 {
 	NVIC_PriorityGroupConfig( NVIC_PriorityGroup_4 );	
+	SPI_DMA_Config();
+	SPI_DMA_IT_Config();
 //	Sensor_Power_Config();
 //	SENSOR_POWER_ON();
 //	USART_Config();
