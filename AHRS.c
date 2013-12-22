@@ -21,8 +21,7 @@ xQueueHandle xAccCaliQueue;
 xQueueHandle xEKFQueue;
 
 AccCaliType accCaliStructure;
-volatile u8 IMU_data_ready=0;
-volatile u8 baro_data_ready=0;
+
 ComType comt;
 BaroHeightType bht;
 
@@ -414,8 +413,8 @@ void vAHRSReadRaw(void* pvParameters)
 	vPortFree(invKMat.pData);
 
 	//硬件配置
-	SPI_Config();
-	SPI_IT_Config();
+	SPI_DMA_Config();
+	SPI_DMA_IT_Config();
 	
 	Blinks(LED1,1);
 	xLastReadTime=xTaskGetTickCount();
@@ -466,15 +465,10 @@ void vAHRSReadRaw(void* pvParameters)
 		comt.Check=0;
 		for(i=0;i<9;i++) 
 			comt.Check+=comt.data[i];
-
-		IMU_data_ready = 0;
-		for(i=0;i<3;i++) comt.data[i]=(s16)(sdt.gyr[i]*4000.0);
-		for(i=0;i<3;i++) comt.data[i+3]=(s16)(sdt.acc[i]*1000.0);
-		for(i=0;i<3;i++) comt.data[i+6]=sdt.mag[i];
-		comt.Check=0;
-		for(i=0;i<9;i++) 
-			comt.Check+=comt.data[i];
-		IMU_data_ready = 1;
+		
+		buffer_lock_global = 1;
+		LoadRawData(spi_mid_buffer);
+		buffer_lock_global = 0;
 		
 		xQueueReceive(xEKFQueue, &sdtTrashCan, 0);
 		xQueueSend(xEKFQueue, &sdt, 0);
@@ -563,19 +557,11 @@ void Gyro_Cali(float* gyro_offset)
 
 void LoadRawData(u8 *buffer)
 {
-		if(IMU_data_ready == 1)
-		{
-			*(ComType *)buffer = comt;
-			IMU_data_ready = 0;
-		}
+	*(ComType *)buffer = comt;
 }
 
 void LoadBaroData(u8 *buffer)
 {
-	if(baro_data_ready == 1)
-	{
-		*(BaroHeightType *)buffer = bht;
-		baro_data_ready = 0;
-	}
+	*(BaroHeightType *)buffer = bht;
 }
 

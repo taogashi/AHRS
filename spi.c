@@ -1,18 +1,24 @@
+#include <string.h>
+
 #include "spi.h"
 #include "stm32f10x.h"
 #include "AHRS.h"
 #include "AHRSEKF.h"
 #include "OSConfig.h"
 
-u8 spi_buffer[50]={0};
+u8 spi_mid_buffer[MAX_BUFFER_LEN];
+u8 spi_dma_buffer[SPI_DMA_BUFFER_LEN]={0};
+volatile u8 buffer_lock_global;
 
-void SPI_Config(void)
+void SPI_DMA_Config(void)
 {
     SPI_InitTypeDef  SPI_InitStructure;
 	GPIO_InitTypeDef  GPIO_InitStructure;
+	DMA_InitTypeDef DMA_InitStructure;
 
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI1,ENABLE);
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA,ENABLE);
+	RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, ENABLE);
 
 	//MOSI PA7 | MISO PA6 | SCK  PA5 | NSS PA4
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_7;
@@ -35,45 +41,46 @@ void SPI_Config(void)
 	SPI_InitStructure.SPI_FirstBit = SPI_FirstBit_MSB;
 	SPI_InitStructure.SPI_CRCPolynomial = 7 ;
 	SPI_Init(SPI1, &SPI_InitStructure);
+	
+	DMA_DeInit(DMA1_Channel3);
+	DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)(SPI1->DR);
+	DMA_InitStructure.DMA_MemoryBaseAddr = (uint32_t)(spi_dma_buffer);
+	DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralDST;
+	DMA_InitStructure.DMA_BufferSize = (uint16_t)SPI_DMA_BUFFER_LEN;
+	DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
+	DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
+	DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;
+	DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Byte;
+	DMA_InitStructure.DMA_Mode = DMA_Mode_Normal;
+	DMA_InitStructure.DMA_Priority = DMA_Priority_VeryHigh;
+	DMA_InitStructure.DMA_M2M = DMA_M2M_Disable;
+	DMA_Init(DMA1_Channel3, &DMA_InitStructure);
 
+	SPI_I2S_DMACmd(SPI1, SPI_I2S_DMAReq_Tx, ENABLE);
 	SPI_Cmd(SPI1, ENABLE);
+	DMA_Cmd(DMA1_Channel3, ENABLE);
+	
+	spi_dma_buffer[SPI_DMA_BUFFER_LEN-1] = 0xbb;
+	spi_dma_buffer[SPI_DMA_BUFFER_LEN-2] = 0xbb;
 }
 
-void SPI_IT_Config(void)
+void SPI_DMA_IT_Config(void)
 {
 	NVIC_InitTypeDef NVIC_InitStructure;
-	SPI_I2S_ITConfig(SPI1, SPI_I2S_IT_RXNE, ENABLE);
-	NVIC_InitStructure.NVIC_IRQChannel = SPI1_IRQn;
-	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;
+	
+	DMA_ITConfig(DMA1_Channel3, DMA_IT_TC, ENABLE);
+	NVIC_InitStructure.NVIC_IRQChannel = DMA1_Channel3_IRQn;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 4;
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&NVIC_InitStructure);
 }
 
-void SPI1_IRQHandler(void)
+void DMA1_Channel3_IRQHandler(void)
 {
-	u8 receive;	//接收到的字节
-	static u8 numb=0;
-
-	if (SPI_I2S_GetITStatus(SPI1, SPI_I2S_IT_RXNE) != RESET)
+	/*DMA1 Streamer6 transmit complete*/
+	if(DMA_GetITStatus(DMA1_IT_TC3) != RESET)
 	{
-		receive=SPI_I2S_ReceiveData(SPI1);
-		if(receive==0x51)
-		{
-			LoadRawData(spi_buffer);
-			numb=0;
-		}
-		else if(receive==0xa9)
-		{
-			LoadAttData(spi_buffer);
-			numb = 0;
-		}
-		else if(receive==0x32)
-		{
-			LoadBaroData(spi_buffer);			
-			numb=0;
-		}
-		SPI_I2S_SendData(SPI1,spi_buffer[numb++]);
-//		SPI_I2S_SendData(SPI1,numb++);
-	}
+		memcpy(spi_dma_buffer, spi_mid_buffer, AHRS_FRAME_LEN);
+	}	
 }
 

@@ -55,12 +55,12 @@ int main( void )
 					,NULL
 					,mainFLASH_TASK_PRIORITY+3
 					,(xTaskHandle *)NULL);
-		xTaskCreate(vAEKFProcessTask
-		            ,(signed char *)"ahrs_ekf"
-					,configMINIMAL_STACK_SIZE+256
-					,NULL
-					,mainFLASH_TASK_PRIORITY+2
-					,(xTaskHandle *)NULL);
+//		xTaskCreate(vAEKFProcessTask
+//		            ,(signed char *)"ahrs_ekf"
+//					,configMINIMAL_STACK_SIZE+256
+//					,NULL
+//					,mainFLASH_TASK_PRIORITY+2
+//					,(xTaskHandle *)NULL);
 //		xTaskCreate(vAHRSReadBaroHeight
 //		            ,(signed char *)"baro"
 //					,configMINIMAL_STACK_SIZE+128
