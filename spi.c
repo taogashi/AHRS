@@ -73,6 +73,7 @@ void SPI1_IRQHandler(void)
 			numb=0;
 		}
 		SPI_I2S_SendData(SPI1,spi_buffer[numb++]);
+//		SPI_I2S_SendData(SPI1,numb++);
 	}
 }
 
