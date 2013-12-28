@@ -57,35 +57,38 @@ void SPI_DMA_Config(void)
 	DMA_InitStructure.DMA_M2M = DMA_M2M_Disable;
 	DMA_Init(DMA1_Channel2, &DMA_InitStructure);
 
-//	DMA_DeInit(DMA1_Channel3);
-//	DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)(SPI1->DR);
-//	DMA_InitStructure.DMA_MemoryBaseAddr = (uint32_t)(spi_dma_tx_buffer);
-//	DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralDST;
-//	DMA_InitStructure.DMA_BufferSize = (uint16_t)SPI_DMA_BUFFER_LEN;
-//	DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
-//	DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
-//	DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;
-//	DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Byte;
-//	DMA_InitStructure.DMA_Mode = DMA_Mode_Circular;
-//	DMA_InitStructure.DMA_Priority = DMA_Priority_High;
-//	DMA_InitStructure.DMA_M2M = DMA_M2M_Disable;
-//	DMA_Init(DMA1_Channel3, &DMA_InitStructure);
+	DMA_DeInit(DMA1_Channel3);
+	DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)(&(SPI1->DR));
+	DMA_InitStructure.DMA_MemoryBaseAddr = (uint32_t)(spi_dma_tx_buffer);
+	DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralDST;
+	DMA_InitStructure.DMA_BufferSize = (uint16_t)SPI_DMA_BUFFER_LEN;
+	DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
+	DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
+	DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;
+	DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Byte;
+	DMA_InitStructure.DMA_Mode = DMA_Mode_Circular;
+	DMA_InitStructure.DMA_Priority = DMA_Priority_High;
+	DMA_InitStructure.DMA_M2M = DMA_M2M_Disable;
+	DMA_Init(DMA1_Channel3, &DMA_InitStructure);
 
-	SPI_I2S_DMACmd(SPI1, SPI_I2S_DMAReq_Rx, ENABLE);
+	SPI_I2S_DMACmd(SPI1, SPI_I2S_DMAReq_Rx | SPI_I2S_DMAReq_Tx, ENABLE);
 	SPI_Cmd(SPI1, ENABLE);
 	
 	DMA_Cmd(DMA1_Channel2, ENABLE);
-//	DMA_Cmd(DMA1_Channel3, ENABLE);
+	DMA_Cmd(DMA1_Channel3, ENABLE);
 	
-//	spi_dma_tx_buffer[SPI_DMA_BUFFER_LEN-1] = 0xbb;
-//	spi_dma_tx_buffer[SPI_DMA_BUFFER_LEN-2] = 0xbb;
+	spi_mid_buffer[0] = 0x2b;
+	spi_mid_buffer[1] = 0x51;
+	spi_mid_buffer[2] = 0x32;
+	spi_dma_tx_buffer[SPI_DMA_BUFFER_LEN-1] = 0xbb;
+	spi_dma_tx_buffer[SPI_DMA_BUFFER_LEN-2] = 0xbb;
 }
 
 void SPI_DMA_IT_Config(void)
 {
 	NVIC_InitTypeDef NVIC_InitStructure;
 	
-//	DMA_ITConfig(DMA1_Channel3, DMA_IT_TC, ENABLE);
+	DMA_ITConfig(DMA1_Channel3, DMA_IT_TC, ENABLE);
 	DMA_ITConfig(DMA1_Channel2, DMA_IT_TC, ENABLE);
 	
 	NVIC_InitStructure.NVIC_IRQChannel = DMA1_Channel2_IRQn;
@@ -93,10 +96,10 @@ void SPI_DMA_IT_Config(void)
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&NVIC_InitStructure);
 	
-//	NVIC_InitStructure.NVIC_IRQChannel = DMA1_Channel3_IRQn;
-//	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 4;
-//	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-//	NVIC_Init(&NVIC_InitStructure);
+	NVIC_InitStructure.NVIC_IRQChannel = DMA1_Channel3_IRQn;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 4;
+	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+	NVIC_Init(&NVIC_InitStructure);
 }
 
 void DMA1_Channel2_IRQHandler(void)
@@ -113,7 +116,8 @@ void DMA1_Channel3_IRQHandler(void)
 	/*DMA1 Streamer6 transmit complete*/
 	if(DMA_GetITStatus(DMA1_IT_TC3) != RESET)
 	{
-		memcpy(spi_dma_tx_buffer, spi_mid_buffer, AHRS_FRAME_LEN);
+		if(buffer_lock_global == 0)
+			memcpy(spi_dma_tx_buffer, spi_mid_buffer, AHRS_FRAME_LEN);
 		DMA_ClearITPendingBit(DMA1_IT_TC3);
 	}	
 }

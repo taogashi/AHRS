@@ -477,38 +477,6 @@ void vAHRSReadRaw(void* pvParameters)
 	}
 }
 
-//void vAHRSReadBaroHeight(void* pvParameters)
-//{
-//	BaroDataType bdt;
-//	BaroHeightType bht,trashCan;
-//	float height,h0=0.0;
-//	s16 height_cm;
-//	u8 i;
-//
-//	for(i=0;i<20;i++)
-//	{
-//		LPS331AP_Read_RawData(&bdt);
-//		vTaskDelay((portTickType)50/portTICK_RATE_MS);
-//	}
-//
-//	LPS331AP_Read_RawData(&bdt);
-//	h0 = -(bdt.press*0.002044897)+8488.0;
-//	vTaskDelay((portTickType)50/portTICK_RATE_MS);
-//	
-//	for(;;)
-//	{
-//		LPS331AP_Read_RawData(&bdt);
-//		height=-(bdt.press*0.002044897)+8488.0-h0;
-//		height_cm=(s16)(height*100);
-//		bht.baroheight = height_cm;
-//		bht.check = *(u8 *)(&(bht.baroheight)) + *((u8 *)(&(bht.baroheight))+1);
-//
-//		xQueueReceive(xBaroHeightQueue,&trashCan,0);
-//		xQueueSend(xBaroHeightQueue,&bht,0);
-//		vTaskDelay((portTickType)50/portTICK_RATE_MS);
-//	}
-//}
-
 float Mean(float* sample,u16 N)
 {
 	float sum=0.0;

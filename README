@@ -1,0 +1,10 @@
+28.12.2013
+BYYS
+
+1.hardware I2C intterupt mode, support unblocking access to I2C sensors;
+2.hardware SPI-DMA mode, slave mode, support high speed communication with upper system;
+3.main loop runs @500Hz;
+4.only raw data avalible;
+
+AHRS
+====
