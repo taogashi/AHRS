@@ -1,3 +1,7 @@
+# Mid files
+*.d
+*.crf
+
 # Object files
 *.o
 *.ko
@@ -16,3 +20,6 @@
 *.exe
 *.out
 *.app
+
+# Other files
+*.uvgui*.*
