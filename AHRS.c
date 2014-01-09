@@ -1,21 +1,19 @@
 #include "AHRS.h"
-#include "OSConfig.h"
-#include "spi.h"
+
 #include <stdio.h>
 #include <arm_math.h>
 
-#include "LSM303DLH.h"
-#include "LIS3LV02DQ.h"
-#include "ITG3200.h"
+#include "mag3110.h"
+#include "AD7689.h"
+#include "MS5607B.h"
 
-#include "HAL_I2C.h"
 #include "I2C.h"
-
+#include "spi.h"
 #include "ledTask.h"
+//#include "filter.h"
+//#include "axisTrans.h"
 
 #define GRAVITY 9.8015
-
-u8 sensor_raw[18];
 
 xQueueHandle xAccCaliQueue;
 xQueueHandle xEKFQueue;
@@ -27,84 +25,60 @@ BaroHeightType bht;
 
 float Mean(float* sample,u16 N);
 float Var(float* sample,u16 N);
+
 void Gyro_Cali(float* gyro_offset);
 
-__inline void AHRS_Read_SPI_Acc(float *acc)
+__inline void AHRS_Read_IMU(float *gyr,float *acc)
 {
 	AHRS_ENTER_CRITICAL();
-	LIS3_Read_Acc(acc);
+	AD7689_Read_Gyro_Acc(gyr,acc);
 	AHRS_EXIT_CRITICAL();
 }
 
-__inline void AHRS_Read_I2C_Acc(float *acc)
-{	
-	User_I2C_BufferRead(LSM_A_I2C_ADDRESS, sensor_raw, LSM_A_OUT_X_L_ADDR | 0x80, 6);
-	LSM303DLH_Raw2Acc(sensor_raw+6, acc);
-	vTaskDelay((portTickType)2/portTICK_RATE_MS);	
-}
-
-__inline void AHRS_Read_I2C_Gyr(float *gyr)
+__inline void AHRS_Read_Mag(s16 *mag)
 {
-	User_I2C_BufferRead(ITG_I2C_ADDRESS, sensor_raw, ITG_XOUT_H_ADDR, 6);
-	ITG_Raw2Gyro(sensor_raw, gyr);
-	vTaskDelay((portTickType)1/portTICK_RATE_MS);
-}
-
-__inline void AHRS_Read_I2C_Mag(s16 *mag)
-{
-	User_I2C_BufferRead(LSM_M_I2C_ADDRESS, sensor_raw, LSM_M_OUT_X_H_ADDR | 0x80, 6);
-	LSM303DLH_Raw2Mag(sensor_raw+12, mag);
-	vTaskDelay((portTickType)1/portTICK_RATE_MS);
+	AHRS_ENTER_CRITICAL();
+	MAG3110_Read_Mag(mag);
+	AHRS_EXIT_CRITICAL();
 }
 
 void vAHRSConfig(void* pvParameters)
 {	
 	float acc[3]={0.0};
+	float gyr[3]={0.0};
 	float acczMean=0.0;
 	u8 i;
-	
-	Blinks(LED1, 3);
-	/*I2C peripherial initialize*/
+
+	Blinks(LED2,3);
+	MS5607B_SPI_Init();
+	AD7689_SPI_Init();
+	vTaskDelay((portTickType)200/portTICK_RATE_MS);
+
 	User_I2C_Config();
 	vTaskDelay((portTickType)200/portTICK_RATE_MS);
 
-	/*sensors initialize*/
-	AHRS_ENTER_CRITICAL();
-	ITG3205_Config();
-	AHRS_EXIT_CRITICAL();
-	vTaskDelay((portTickType)10/portTICK_RATE_MS);
-
-	AHRS_ENTER_CRITICAL();
-	LSM_Config();
-	AHRS_EXIT_CRITICAL();
-	vTaskDelay((portTickType)10/portTICK_RATE_MS);
-
-	LIS3_SPI_Init();
-	AHRS_ENTER_CRITICAL();
-	LIS3LV_Config();
-	AHRS_EXIT_CRITICAL();
-
-	/*read acc cali data from flash*/
+	MAG_Config();
 	//read flash 15 float = 60 byte
 	xQueueReceive(xAccCaliQueue,&accCaliStructure,portMAX_DELAY);
+
+	//delay to wait stable condition
 	vTaskDelay((portTickType)3000/portTICK_RATE_MS);
 	
-	/*I2C interrupt config*/
 	User_I2C_IT_Config();
-	
+
 	//check acc
 	//if invert ..
 	//else read flash
-	AHRS_Read_SPI_Acc(acc);
-	
+	AHRS_Read_IMU(gyr,acc);
 	acczMean=acc[2];
+
 	for(i=2;i<20;i++)
-	{	
-		AHRS_Read_SPI_Acc(acc);
+	{
+		AHRS_Read_IMU(gyr,acc);
 		acczMean=acczMean+(acc[2]-acczMean)/i;
 		vTaskDelay((portTickType)10/portTICK_RATE_MS);
 	}
-	if(acczMean>7.5)	//invert
+	if(acczMean>7.5)//invert
 	{
 		xTaskCreate(vAHRSCali,(signed char *)"ahrs_cali"
 				,configMINIMAL_STACK_SIZE+1024
@@ -119,6 +93,7 @@ void vAHRSConfig(void* pvParameters)
 						,NULL,mainFLASH_TASK_PRIORITY+3
 						,(xTaskHandle *)NULL);
 	}
+	Blinks(LED2,1);
 	vTaskDelete(NULL);	
 }
 
@@ -157,38 +132,34 @@ void vAHRSCali(void* pvParameters)
 
 	Blinks(LED1,3);//indicate calibration process begin
 	vTaskDelay((portTickType)5000/portTICK_RATE_MS);
-	
-	/*refresh sensor data*/
-	AHRS_Read_I2C_Gyr(gyro);
-	
 	Blinks(LED1,2);//indicate collecting data
 	for(i=0;i<100;i++)
 	{
-		AHRS_Read_I2C_Gyr(gyro);
+		AHRS_Read_IMU(gyro,acc);
 		buffer[i]=gyro[0];
 		vTaskDelay((portTickType)20/portTICK_RATE_MS);
 	}
 	Blinks(LED1,3);
 	gyroVarStable = Var(buffer,100);
 
-	AHRS_Read_SPI_Acc(acc);
+	AHRS_Read_IMU(gyro,acc);
 	while(acc[0]<7.8 || gyroVar>gyroVarStable)  //x axis upward
 	{
 		for(i=0;i<100;i++)
 		{
-			AHRS_Read_I2C_Gyr(gyro);
+			AHRS_Read_IMU(gyro,acc);
 			buffer[i]=gyro[0];
 			vTaskDelay((portTickType)20/portTICK_RATE_MS);
 		}
 		gyroVar=Var(buffer,100);
-		AHRS_Read_SPI_Acc(acc);
+		AHRS_Read_IMU(gyro,acc);
 	}
 	Blinks(LED1,2);
 	A[0]=acc[0];	A[6]=acc[1];	A[12]=acc[2];
 
 	for(i=2;i<100;i++)
 	{
-		AHRS_Read_SPI_Acc(acc);
+		AHRS_Read_IMU(gyro,acc);
 		A[0]=A[0]+(acc[0]-A[0])/i;
 		A[6]=A[6]+(acc[1]-A[6])/i;
 		A[12]=A[12]+(acc[2]-A[12])/i;
@@ -196,24 +167,24 @@ void vAHRSCali(void* pvParameters)
 	}
 	Blinks(LED1,3);
 
-	AHRS_Read_SPI_Acc(acc);
+	AHRS_Read_IMU(gyro,acc);
 	while(acc[0]>-7.8 || gyroVar>gyroVarStable)  //x axis downward
 	{
 		for(i=0;i<100;i++)
 		{
-			AHRS_Read_I2C_Gyr(gyro);
+			AHRS_Read_IMU(gyro,acc);
 			buffer[i]=gyro[0];
 			vTaskDelay((portTickType)20/portTICK_RATE_MS);
 		}
 		gyroVar=Var(buffer,100);
-		AHRS_Read_SPI_Acc(acc);
+		AHRS_Read_IMU(gyro,acc);
 	}
 	Blinks(LED1,2);
 	A[1]=acc[0];	A[7]=acc[1];	A[13]=acc[2];
 
 	for(i=2;i<100;i++)
 	{
-		AHRS_Read_SPI_Acc(acc);
+		AHRS_Read_IMU(gyro,acc);
 		A[1]=A[1]+(acc[0]-A[1])/i;
 		A[7]=A[7]+(acc[1]-A[7])/i;
 		A[13]=A[13]+(acc[2]-A[13])/i;
@@ -221,24 +192,24 @@ void vAHRSCali(void* pvParameters)
 	}
 	Blinks(LED1,3);
 
-	AHRS_Read_SPI_Acc(acc);
+	AHRS_Read_IMU(gyro,acc);
 	while(acc[1]<7.8 || gyroVar>gyroVarStable)  //y axis upward
 	{
 		for(i=0;i<100;i++)
 		{
-			AHRS_Read_I2C_Gyr(gyro);
+			AHRS_Read_IMU(gyro,acc);
 			buffer[i]=gyro[0];
 			vTaskDelay((portTickType)20/portTICK_RATE_MS);
 		}
 		gyroVar=Var(buffer,100);
-		AHRS_Read_SPI_Acc(acc);
+		AHRS_Read_IMU(gyro,acc);
 	}
 	Blinks(LED1,2);
 	A[2]=acc[0];	A[8]=acc[1];A[14]=acc[2];
 
 	for(i=2;i<100;i++)
 	{
-		AHRS_Read_SPI_Acc(acc);
+		AHRS_Read_IMU(gyro,acc);
 		A[2]=A[2]+(acc[0]-A[2])/i;
 		A[8]=A[8]+(acc[1]-A[8])/i;
 		A[14]=A[14]+(acc[2]-A[14])/i;
@@ -246,24 +217,24 @@ void vAHRSCali(void* pvParameters)
 	}
 	Blinks(LED1,3);
 	
-	AHRS_Read_SPI_Acc(acc);
+	AHRS_Read_IMU(gyro,acc);
 	while(acc[1]>-7.8 || gyroVar>gyroVarStable)  //y axis downward
 	{
 		for(i=0;i<100;i++)
 		{
-			AHRS_Read_I2C_Gyr(gyro);
+			AHRS_Read_IMU(gyro,acc);
 			buffer[i]=gyro[0];
 			vTaskDelay((portTickType)20/portTICK_RATE_MS);
 		}
 		gyroVar=Var(buffer,100);
-		AHRS_Read_SPI_Acc(acc);
+		AHRS_Read_IMU(gyro,acc);
 	}
 	Blinks(LED1,2);
 	A[3]=acc[0];	A[9]=acc[1];	A[15]=acc[2];
 
 	for(i=2;i<100;i++)
 	{
-		AHRS_Read_SPI_Acc(acc);
+		AHRS_Read_IMU(gyro,acc);
 		A[3]=A[3]+(acc[0]-A[3])/i;
 		A[9]=A[9]+(acc[1]-A[9])/i;
 		A[15]=A[15]+(acc[2]-A[15])/i;
@@ -271,24 +242,24 @@ void vAHRSCali(void* pvParameters)
 	}
 	Blinks(LED1,3);
 
-	AHRS_Read_SPI_Acc(acc);
+	AHRS_Read_IMU(gyro,acc);
 	while(acc[2]<7.8 || gyroVar>gyroVarStable)  //z axis upward
 	{
 		for(i=0;i<100;i++)
 		{
-			AHRS_Read_I2C_Gyr(gyro);
+			AHRS_Read_IMU(gyro,acc);
 			buffer[i]=gyro[0];
 			vTaskDelay((portTickType)20/portTICK_RATE_MS);
 		}
 		gyroVar=Var(buffer,100);
-		AHRS_Read_SPI_Acc(acc);
+		AHRS_Read_IMU(gyro,acc);
 	}
 	Blinks(LED1,2);
 	A[4]=acc[0];	A[10]=acc[1];	A[16]=acc[2];
 
 	for(i=2;i<100;i++)
 	{
-		AHRS_Read_SPI_Acc(acc);
+		AHRS_Read_IMU(gyro,acc);
 		A[4]=A[4]+(acc[0]-A[4])/i;
 		A[10]=A[10]+(acc[1]-A[10])/i;
 		A[16]=A[16]+(acc[2]-A[16])/i;
@@ -296,24 +267,24 @@ void vAHRSCali(void* pvParameters)
 	}
 	Blinks(LED1,3);
 
-	AHRS_Read_SPI_Acc(acc);
+	AHRS_Read_IMU(gyro,acc);
 	while(acc[2]>-7.8 || gyroVar>gyroVarStable)  //z axis downward
 	{
 		for(i=0;i<100;i++)
 		{
-			AHRS_Read_I2C_Gyr(gyro);
+			AHRS_Read_IMU(gyro,acc);
 			buffer[i]=gyro[0];
 			vTaskDelay((portTickType)20/portTICK_RATE_MS);
 		}
 		gyroVar=Var(buffer,100);
-		AHRS_Read_SPI_Acc(acc);
+		AHRS_Read_IMU(gyro,acc);
 	}
 	Blinks(LED1,2);
 	A[5]=acc[0];	A[11]=acc[1];A[17]=acc[2];
 
 	for(i=2;i<100;i++)
 	{
-		AHRS_Read_SPI_Acc(acc);
+		AHRS_Read_IMU(gyro,acc);
 		A[5]=A[5]+(acc[0]-A[5])/i;
 		A[11]=A[11]+(acc[1]-A[11])/i;
 		A[17]=A[17]+(acc[2]-A[17])/i;
@@ -376,6 +347,7 @@ void vAHRSReadRaw(void* pvParameters)
 	float bias_a[3];
 	arm_matrix_instance_f32 KMat,invKMat;
 	float gyro_offset[3]={0};
+	u8 mag_raw[6];
 	float acc[3];
 	float gyr[3];
 	
@@ -420,8 +392,7 @@ void vAHRSReadRaw(void* pvParameters)
 	xLastReadTime=xTaskGetTickCount();
 	for(;;)
 	{
-		AHRS_Read_I2C_Gyr(gyr);
-		AHRS_Read_SPI_Acc(acc);
+		AHRS_Read_IMU(gyr,acc);
 		
 		sdt.acc[0] = K[0]*(acc[0]-bias_a[0])+K[1]*(acc[1]-bias_a[1])+K[2]*(acc[2]-bias_a[2]);
 		sdt.acc[1] = K[3]*(acc[0]-bias_a[0])+K[4]*(acc[1]-bias_a[1])+K[5]*(acc[2]-bias_a[2]);
@@ -453,10 +424,11 @@ void vAHRSReadRaw(void* pvParameters)
 			}
 		}
 
-		if(CNT++>10)
+		if(CNT++>20)
 		{
 			CNT=0;
-			AHRS_Read_I2C_Mag(sdt.mag);
+			User_I2C_BufferRead(MAG3110_ADDR, mag_raw, MAG3110_OUT_X_MSB_REG, 6);
+			MAG3110_Raw2Mag(mag_raw, sdt.mag);
 		}
 
 		for(i=0;i<3;i++) comt.data[i]=(s16)(sdt.gyr[i]*4000.0);
@@ -469,13 +441,46 @@ void vAHRSReadRaw(void* pvParameters)
 		buffer_lock_global = 1;
 		LoadRawData(spi_mid_buffer);
 		buffer_lock_global = 0;
-		
+			
 		xQueueReceive(xEKFQueue, &sdtTrashCan, 0);
 		xQueueSend(xEKFQueue, &sdt, 0);
 
 		vTaskDelayUntil(&xLastReadTime,(portTickType)2/portTICK_RATE_MS);
 	}
 }
+
+
+//void vAHRSReadBaroHeight(void* pvParameters)
+//{
+//	BaroDataType bdt;
+//	BaroHeightType bht,trashCan;
+//	float height,h0=0.0;
+//	s16 height_cm;
+//	u8 i;
+
+//	for(i=0;i<20;i++)
+//	{
+//		LPS331AP_Read_RawData(&bdt);
+//		vTaskDelay((portTickType)50/portTICK_RATE_MS);
+//	}
+
+//	LPS331AP_Read_RawData(&bdt);
+//	h0 = -(bdt.press*0.002044897)+8488.0;
+//	vTaskDelay((portTickType)50/portTICK_RATE_MS);
+//	
+//	for(;;)
+//	{
+//		LPS331AP_Read_RawData(&bdt);
+//		height=-(bdt.press*0.002044897)+8488.0-h0;
+//		height_cm=(s16)(height*100);
+//		bht.baroheight = height_cm;
+//		bht.check = *(u8 *)(&(bht.baroheight)) + *((u8 *)(&(bht.baroheight))+1);
+
+//		xQueueReceive(xBaroHeightQueue,&trashCan,0);
+//		xQueueSend(xBaroHeightQueue,&bht,0);
+//		vTaskDelay((portTickType)50/portTICK_RATE_MS);
+//	}
+//}
 
 float Mean(float* sample,u16 N)
 {
@@ -503,24 +508,31 @@ float Var(float* sample,u16 N)
 	return var;
 }
 
+//void BMA_Config(void)
+//{
+//	BMA180_ConfigTypeDef  BMA180_InitStructure;
+//	BMA180_InitStructure.range=RANGE_2G;
+//	BMA180_InitStructure.bw=BW_600Hz;
+//	BMA180_InitStructure.mode=MODE_LOW_NOISE;
+//	BMA180_Init(&BMA180_InitStructure);
+//}
+
 void Gyro_Cali(float* gyro_offset)
 {
 	u16 i;
 	u8 j;
-
 	float rawData[3];
+	float acc[3];
 	float sum[3]={0.0};
-
-	for(i=0;i<1000;i++)
+	for(i=0;i<500;i++)
 	{
-		AHRS_Read_I2C_Gyr(rawData);
-		
+		AHRS_Read_IMU(rawData,acc);
 		for(j=0;j<3;j++)
 			sum[j]+=rawData[j];
-		vTaskDelay((portTickType)5/portTICK_RATE_MS);
+		vTaskDelay((portTickType)10/portTICK_RATE_MS);
 	}
 	for(j=0;j<3;j++)
-		gyro_offset[j]=(sum[j]/1000.0);
+		gyro_offset[j]=(sum[j]/500.0);
 }
 
 void LoadRawData(u8 *buffer)
@@ -532,4 +544,5 @@ void LoadBaroData(u8 *buffer)
 {
 	*(BaroHeightType *)buffer = bht;
 }
+
 

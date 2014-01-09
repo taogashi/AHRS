@@ -351,7 +351,7 @@
               <MiscControls></MiscControls>
               <Define>USE_STDPERIPH_DRIVER,STM32F10X_MD,ARM_MATH_CM3</Define>
               <Undefine></Undefine>
-              <IncludePath>..\CMSIS;..\StdPeriph_Driver\inc;..\User;..\Source\include;..\Source\portable\RVDS\ARM_CM3;..\DSP_lib</IncludePath>
+              <IncludePath>..\CMSIS;..\StdPeriph_Driver\inc;..\Source\include;..\Source\portable\RVDS\ARM_CM3;..\DSP_lib;..\User</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -393,34 +393,9 @@
           <GroupName>User</GroupName>
           <Files>
             <File>
-              <FileName>main.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\main.c</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f10x_it.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\stm32f10x_it.c</FilePath>
-            </File>
-            <File>
-              <FileName>ledTask.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\ledTask.c</FilePath>
-            </File>
-            <File>
-              <FileName>AHRS.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\AHRS.c</FilePath>
-            </File>
-            <File>
               <FileName>AHRSEKF.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\AHRSEKF.c</FilePath>
-            </File>
-            <File>
-              <FileName>axisTrans.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\axisTrans.c</FilePath>
             </File>
             <File>
               <FileName>filter.c</FileName>
@@ -436,6 +411,31 @@
               <FileName>kalman.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\kalman.c</FilePath>
+            </File>
+            <File>
+              <FileName>ledTask.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\ledTask.c</FilePath>
+            </File>
+            <File>
+              <FileName>main.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\main.c</FilePath>
+            </File>
+            <File>
+              <FileName>stm32f10x_it.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\stm32f10x_it.c</FilePath>
+            </File>
+            <File>
+              <FileName>AHRS.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\AHRS.c</FilePath>
+            </File>
+            <File>
+              <FileName>axisTrans.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\axisTrans.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -563,34 +563,34 @@
           <GroupName>UserPeriph</GroupName>
           <Files>
             <File>
-              <FileName>led.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\led.c</FilePath>
-            </File>
-            <File>
               <FileName>I2C.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\I2C.c</FilePath>
             </File>
             <File>
-              <FileName>ITG3200.c</FileName>
+              <FileName>led.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\ITG3200.c</FilePath>
+              <FilePath>.\led.c</FilePath>
             </File>
             <File>
-              <FileName>LIS3LV02DQ.c</FileName>
+              <FileName>mag3110.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\LIS3LV02DQ.c</FilePath>
+              <FilePath>.\mag3110.c</FilePath>
             </File>
             <File>
-              <FileName>LSM303DLH.c</FileName>
+              <FileName>MS5607B.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\LSM303DLH.c</FilePath>
+              <FilePath>.\MS5607B.c</FilePath>
             </File>
             <File>
               <FileName>spi.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\spi.c</FilePath>
+            </File>
+            <File>
+              <FileName>AD7689.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\AD7689.c</FilePath>
             </File>
           </Files>
         </Group>

@@ -77,9 +77,6 @@ void SPI_DMA_Config(void)
 	DMA_Cmd(DMA1_Channel2, ENABLE);
 	DMA_Cmd(DMA1_Channel3, ENABLE);
 	
-	spi_mid_buffer[0] = 0x2b;
-	spi_mid_buffer[1] = 0x51;
-	spi_mid_buffer[2] = 0x32;
 	spi_dma_tx_buffer[SPI_DMA_BUFFER_LEN-1] = 0xbb;
 	spi_dma_tx_buffer[SPI_DMA_BUFFER_LEN-2] = 0xbb;
 }

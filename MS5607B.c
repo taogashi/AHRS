@@ -162,6 +162,20 @@ u8 MS5607B_I2C_BufferRead(u8 slAddr,u8* pBuffer, u8 ReadAddr, u16 NumByteToRead)
 	return 1;	
 }
 
+void MS5607B_SPI_Init(void)
+{
+	//
+	GPIO_InitTypeDef GPIO_InitStructure;
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB,ENABLE);
+	
+	GPIO_InitStructure.GPIO_Pin = MS5607B_SPI_NSS_Pin;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+	GPIO_Init(MS5607B_SPI_NSS_Pin_Port,&GPIO_InitStructure);
+	
+	MS5607B_SPI_CS_HIGH();
+}
+
 u8 MS5607B_GetData_I2C(uint32_t *Databuff)
 {
 	u8 errStatus=1;

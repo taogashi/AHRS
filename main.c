@@ -5,10 +5,13 @@
 #include "OSConfig.h"
 
 /* Library includes. */
+#include "UART.h"
 #include "spi.h"
 #include "ledTask.h"
 #include "flashTask.h"
 #include "AHRSEKF.h"
+
+#include "I2Ctest.h"
 
 /*
  * Configure the clocks, GPIO and other peripherals as required by the demo.
@@ -22,31 +25,55 @@ int main( void )
 #endif
 
 	prvSetupHardware();
-
+	
 	xAccCaliQueue = xQueueCreate(1,sizeof(AccCaliType));
 	xEKFQueue = xQueueCreate(1,sizeof(SensorDataType));
-	EKFToComQueue = xQueueCreate(1,sizeof(AttComType));   
+	EKFToComQueue = xQueueCreate(1,sizeof(AttComType));
+//	xBaroQueue=xQueueCreate(1,sizeof(baroComType));     
 																	   	
 		xTaskCreate(vLED1Task
-					,(signed char *)"Led flash"
+					,(signed char *)"Led1 flash"
 					,configMINIMAL_STACK_SIZE
 					,NULL
 					,mainFLASH_TASK_PRIORITY
 					,(xTaskHandle *)NULL);
 
+		xTaskCreate(vLED2Task
+					,(signed char *)"Led2 flash"
+					,configMINIMAL_STACK_SIZE
+					,NULL
+					,mainFLASH_TASK_PRIORITY
+					,(xTaskHandle *)NULL);					
 		xTaskCreate(vFlashTask
 		            ,(signed char *)"flash"
 					,configMINIMAL_STACK_SIZE+128
 					,NULL
-					,mainFLASH_TASK_PRIORITY+2
+					,mainFLASH_TASK_PRIORITY+1
 					,(xTaskHandle *)NULL);
-
+//		xTaskCreate(vI2CTest
+//		            ,(signed char *)"i2c"
+//					,configMINIMAL_STACK_SIZE+128
+//					,NULL
+//					,mainFLASH_TASK_PRIORITY+2
+//					,(xTaskHandle *)NULL);
 		xTaskCreate(vAHRSConfig
 		            ,(signed char *)"ahrs_config"
 					,configMINIMAL_STACK_SIZE+128
 					,NULL
 					,mainFLASH_TASK_PRIORITY+3
 					,(xTaskHandle *)NULL);
+//		xTaskCreate(vAEKFProcessTask
+//		            ,(signed char *)"ahrs_ekf"
+//					,configMINIMAL_STACK_SIZE+128
+//					,NULL
+//					,mainFLASH_TASK_PRIORITY+2
+//					,(xTaskHandle *)NULL);
+//		xTaskCreate(vAHRSReadBaroHeight
+//		            ,(signed char *)"baro"
+//					,configMINIMAL_STACK_SIZE+128
+//					,NULL
+//					,mainFLASH_TASK_PRIORITY+1
+//					,(xTaskHandle *)NULL);
 		
 		/* Start the scheduler. */
 		vTaskStartScheduler();

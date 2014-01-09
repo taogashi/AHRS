@@ -3,7 +3,8 @@
 
 #include "HAL_MS5607B.h"
 
-#define MS5607B_USE_I2C
+#define MS5607B_USE_I2C 1
+#define MS5607B_USE_SPI 0
 
 typedef struct
 {
@@ -28,6 +29,8 @@ typedef struct
 void MS5607B_I2C_Init(void);
 u8 MS5607B_I2C_WriteCmd(u8 slAddr, u8 cmd);
 u8 MS5607B_I2C_BufferRead(u8 slAddr,u8* pBuffer, u8 ReadAddr, u16 NumByteToRead);
+
+void MS5607B_SPI_Init(void);
 
 //ÖØÖÃ´«¸ÐÆ÷
 u8 MS5607B_Reset(void);

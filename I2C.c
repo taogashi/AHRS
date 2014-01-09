@@ -1,8 +1,6 @@
 #include "HAL_I2C.h"
 #include "I2C.h"
 #include "stm32f10x.h"
-#include "ITG3200.h"
-#include "LSM303DLH.h"
 
 struct{
 	u8 target_addr;
@@ -90,7 +88,6 @@ u8 User_I2C_ByteWrite(u8 slAddr, u8 data, u8 WriteAddr)
 u8 User_I2C_BufferRead(u8 slAddr,u8* pBuffer, u8 ReadAddr, u16 NumByteToRead)
 {
 	u8 i;
-	static u16 user_trigger=0;
 	
 	if(I2C_GetFlagStatus(USER_I2C, I2C_FLAG_BUSY) == RESET)
 	{		
@@ -101,24 +98,9 @@ u8 User_I2C_BufferRead(u8 slAddr,u8* pBuffer, u8 ReadAddr, u16 NumByteToRead)
 		i2c_com_struct.target_addr = slAddr;
 		i2c_com_struct.target_sub_addr = ReadAddr;
 		
-		switch(i2c_com_struct.last_target_addr)
-		{
-			case ITG_I2C_ADDRESS:
-				for(i=0; i<6; i++)
-					pBuffer[i] = i2c_com_struct.i2c_rx_buffer[i];
-				break;
-			case LSM_A_I2C_ADDRESS:
-				for(i=0; i<6; i++)
-					pBuffer[i+6] = i2c_com_struct.i2c_rx_buffer[i];
-				break;
-			case LSM_M_I2C_ADDRESS:
-				for(i=0; i<6; i++)
-					pBuffer[i+12] = i2c_com_struct.i2c_rx_buffer[i];
-				break;
-			default:
-				break;
-		}
-				
+		for(i=0; i<6; i++)
+			pBuffer[i] = i2c_com_struct.i2c_rx_buffer[i];
+
 		i2c_com_struct.last_target_addr = slAddr;
 		i2c_com_struct.num_to_read = NumByteToRead;
 		
@@ -128,22 +110,15 @@ u8 User_I2C_BufferRead(u8 slAddr,u8* pBuffer, u8 ReadAddr, u16 NumByteToRead)
 		i2c_com_struct.i2c_com_stage = 0;
 		
 		I2C_GenerateSTART(USER_I2C, ENABLE);
-		user_trigger++;
 		return 1;
 	}
 	
 	return 0;	
 }
 
-void I2C2_EV_IRQHandler(void)
+void I2C1_EV_IRQHandler(void)
 {
 	uint32_t i2c_event;
-//	u8 dummy_byte=0;
-	static u16 m_mode_select=0;
-	static u16 m_trans_mode_selected=0;
-	static u16 m_byte_transmitted=0;
-	static u16 m_rece_mode_selected=0;
-	static u16 m_byte_received=0;
 	
 	i2c_event = I2C_GetLastEvent(USER_I2C);
 	
@@ -151,7 +126,6 @@ void I2C2_EV_IRQHandler(void)
 	{
 		/*succeed to generate start signal  ****************/
 		case I2C_EVENT_MASTER_MODE_SELECT:
-			m_mode_select++;
 			if(i2c_com_struct.i2c_com_stage == 0)
 				I2C_Send7bitAddress(USER_I2C, i2c_com_struct.target_addr, I2C_Direction_Transmitter);
 			else
@@ -161,7 +135,6 @@ void I2C2_EV_IRQHandler(void)
 			break;
 		/*address transmitted and is to write **************/
 		case I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED:
-			m_trans_mode_selected++;
 			I2C_SendData(USER_I2C, i2c_com_struct.target_sub_addr);
 			if(i2c_com_struct.num_to_write == 0)
 				I2C_ITConfig(USER_I2C, I2C_IT_BUF, DISABLE);
@@ -182,7 +155,6 @@ void I2C2_EV_IRQHandler(void)
 			
 		/*this event only happen on write stage *************/
 		case I2C_EVENT_MASTER_BYTE_TRANSMITTED:
-			m_byte_transmitted++;
 			if(i2c_com_struct.num_to_read == 0)
 			{
 				/*stop*/
@@ -201,9 +173,7 @@ void I2C2_EV_IRQHandler(void)
 			}
 			break;
 		/*this event only happens on read stage **************/
-		case I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED:
-			m_rece_mode_selected++;
-			
+		case I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED:		
 			if(i2c_com_struct.num_to_read == 1)
 			{
 				I2C_AcknowledgeConfig(USER_I2C, DISABLE);
@@ -213,7 +183,6 @@ void I2C2_EV_IRQHandler(void)
 		
 		/*receive a byte, only happens on read stage **********/
 		case I2C_EVENT_MASTER_BYTE_RECEIVED:
-			m_byte_received++;
 			*(i2c_com_struct.p_rx++) = I2C_ReceiveData(USER_I2C);
 			i2c_com_struct.num_to_read--;
 			if(i2c_com_struct.num_to_read == 1)
@@ -228,7 +197,7 @@ void I2C2_EV_IRQHandler(void)
 	}
 }
 
-void I2C2_ER_IRQHandler(void)
+void I2C1_ER_IRQHandler(void)
 {
 	if(I2C_GetITStatus(USER_I2C, I2C_IT_AF) != RESET)
 	{

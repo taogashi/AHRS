@@ -11,4 +11,12 @@
 #define MS5607B_I2C_RCC_Port         RCC_APB2Periph_GPIOB								 
 #define MS5607B_I2C_Speed            400000
 
+#define MS5607B_SPI_CS_HIGH() 		GPIO_SetBits(MS5607B_SPI_NSS_Pin_Port,MS5607B_SPI_NSS_Pin)
+#define MS5607B_SPI_CS_LOW() 		GPIO_ResetBits(MS5607B_SPI_NSS_Pin_Port,MS5607B_SPI_NSS_Pin)
+
+#define MS5607B_SPI_NSS_Pin_Port      	GPIOB
+#define MS5607B_SPI_NSS_Pin        		GPIO_Pin_12
+#define MS5607B_SPI_NSS_Pin_Source 		GPIO_PinSource12
+#define MS5607B_SPI_NSS_Pin_RCC_Port	RCC_APB2Periph_GPIOB
+
 #endif
