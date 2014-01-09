@@ -1,6 +1,7 @@
 # Mid files
 *.d
 *.crf
+*.dep
 
 # Object files
 *.o
