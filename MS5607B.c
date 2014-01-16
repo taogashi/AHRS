@@ -2,13 +2,6 @@
 #include "HAL_MS5607B.h"
 #include "OSConfig.h"
 
-/*calibration data*/
-uint16_t MS5607B_Calibration[6];
-
-/*raw data of MS5607B*/
-uint32_t MS5607B_PressureData;
-uint32_t MS5607B_TemperatureData;
-
 /*I2C Group*/
 
 void MS5607B_I2C_Init(void)
@@ -164,7 +157,7 @@ u8 MS5607B_I2C_BufferRead(u8 slAddr,u8* pBuffer, u8 ReadAddr, u16 NumByteToRead)
 
 void MS5607B_SPI_Init(void)
 {
-	//
+	SPI_InitTypeDef  SPI_InitStructure;
 	GPIO_InitTypeDef GPIO_InitStructure;
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB,ENABLE);
 	
@@ -173,6 +166,40 @@ void MS5607B_SPI_Init(void)
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
 	GPIO_Init(MS5607B_SPI_NSS_Pin_Port,&GPIO_InitStructure);
 	
+	GPIO_InitStructure.GPIO_Pin =MS5607B_SPI_CLK_Pin;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
+	GPIO_Init(MS5607B_SPI_CLK_Pin_Port,&GPIO_InitStructure);
+
+	GPIO_InitStructure.GPIO_Pin =MS5607B_SPI_MOSI_Pin;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
+	GPIO_Init(MS5607B_SPI_MOSI_Pin_Port,&GPIO_InitStructure);
+
+	GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable,ENABLE);
+	
+	GPIO_InitStructure.GPIO_Pin = MS5607B_SPI_NSS_Pin;
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+	GPIO_Init(MS5607B_SPI_NSS_Pin_Port,&GPIO_InitStructure);	
+	
+	GPIO_InitStructure.GPIO_Pin	= MS5607B_SPI_MISO_Pin;
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
+	GPIO_Init(MS5607B_SPI_MISO_Pin_Port,&GPIO_InitStructure);
+
+	SPI_Cmd(MS5607B_SPI, DISABLE);
+	SPI_InitStructure.SPI_Direction = SPI_Direction_2Lines_FullDuplex;
+	SPI_InitStructure.SPI_Mode = SPI_Mode_Master;
+	SPI_InitStructure.SPI_DataSize = SPI_DataSize_8b;
+	SPI_InitStructure.SPI_CPOL = SPI_CPOL_Low;
+	SPI_InitStructure.SPI_CPHA = SPI_CPHA_1Edge;
+	SPI_InitStructure.SPI_NSS = SPI_NSS_Soft;
+	SPI_InitStructure.SPI_BaudRatePrescaler = MS5607B_SPI_BaudRatePrescaler;	 //656kbps
+	SPI_InitStructure.SPI_FirstBit = SPI_FirstBit_MSB;
+	SPI_InitStructure.SPI_CRCPolynomial = 7;
+	SPI_Init(MS5607B_SPI, &SPI_InitStructure);
+
+	SPI_Cmd(MS5607B_SPI, ENABLE);	
 	MS5607B_SPI_CS_HIGH();
 }
 
