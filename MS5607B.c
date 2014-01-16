@@ -159,7 +159,9 @@ void MS5607B_SPI_Init(void)
 {
 	SPI_InitTypeDef  SPI_InitStructure;
 	GPIO_InitTypeDef GPIO_InitStructure;
-	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB,ENABLE);
+	
+	RCC_APB2PeriphClockCmd(MS5607B_SPI_RCC_Port, ENABLE);
+	RCC_APB1PeriphClockCmd(MS5607B_SPI_RCC_Periph, ENABLE);
 	
 	GPIO_InitStructure.GPIO_Pin = MS5607B_SPI_NSS_Pin;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
@@ -175,17 +177,12 @@ void MS5607B_SPI_Init(void)
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
 	GPIO_Init(MS5607B_SPI_MOSI_Pin_Port,&GPIO_InitStructure);
-
-	GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable,ENABLE);
-	
-	GPIO_InitStructure.GPIO_Pin = MS5607B_SPI_NSS_Pin;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-	GPIO_Init(MS5607B_SPI_NSS_Pin_Port,&GPIO_InitStructure);	
 	
 	GPIO_InitStructure.GPIO_Pin	= MS5607B_SPI_MISO_Pin;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
 	GPIO_Init(MS5607B_SPI_MISO_Pin_Port,&GPIO_InitStructure);
+
+	GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable,ENABLE);
 
 	SPI_Cmd(MS5607B_SPI, DISABLE);
 	SPI_InitStructure.SPI_Direction = SPI_Direction_2Lines_FullDuplex;
@@ -203,6 +200,19 @@ void MS5607B_SPI_Init(void)
 	MS5607B_SPI_CS_HIGH();
 }
 
+u8 MS5607B_SPI_SendByte(u8 byte)
+{
+    while(SPI_I2S_GetFlagStatus(MS5607B_SPI,SPI_I2S_FLAG_TXE) == RESET);
+	SPI_I2S_SendData(MS5607B_SPI,byte);
+	while(SPI_I2S_GetFlagStatus(MS5607B_SPI,SPI_I2S_FLAG_RXNE) == RESET);
+	return SPI_I2S_ReceiveData(MS5607B_SPI);
+}
+
+u8 MS5607B_SPI_ReadByte(void)
+{
+	return (MS5607B_SPI_SendByte(0xff));
+}
+
 u8 MS5607B_GetData_I2C(uint32_t *Databuff)
 {
 	u8 errStatus=1;
@@ -213,30 +223,48 @@ u8 MS5607B_GetData_I2C(uint32_t *Databuff)
 	return errStatus;
 }
 
-u8 MS5607B_StartPressureADC(void)
+u8 MS5607B_StartPressureADC(unsigned char OSR)
 {
+#ifndef MS5607B_USE_SPI
 	u8 errStatus=1;
 	u8 cmd;
 	cmd=CMD_ADC_CONV | CMD_ADC_D1 | CMD_ADC_4096;
    	errStatus &= MS5607B_I2C_WriteCmd(MS5607B_I2C_ADDRESS, cmd);
 	return errStatus;
+#else
+	u8 cmd = CMD_ADC_CONV_PRES | OSR;
+	MS5607B_SPI_SendByte(cmd);
+	return 1;
+#endif
 }
 
-u8 MS5607B_StartTemperatureADC(void)
+u8 MS5607B_StartTemperatureADC(unsigned char OSR)
 {
+#ifndef MS5607B_USE_SPI
 	u8 errStatus=1;
 	u8 cmd=0x58;
 	cmd = CMD_ADC_CONV | CMD_ADC_D2 | CMD_ADC_4096;
    	errStatus &= MS5607B_I2C_WriteCmd(MS5607B_I2C_ADDRESS, cmd);
 	return errStatus;
+#else
+	u8 cmd = CMD_ADC_CONV_TEMP | OSR;
+	MS5607B_SPI_SendByte(cmd);
+	return 1;
+#endif
 }
 
 u8 MS5607B_Reset(void)
 {
+#ifndef MS5607B_USE_SPI
 	u8 errStatus=1;
 	u8 cmd = CMD_RESET;
 	errStatus &= MS5607B_I2C_WriteCmd(MS5607B_I2C_ADDRESS, cmd);
 	return errStatus;
+#else
+	u8 cmd = CMD_RESET;
+	MS5607B_SPI_SendByte(cmd);
+	return 1;
+#endif
 }
 
 //unsigned char MS5607B_StateUpdate_I2C(uint32_t *PressureD, uint32_t *TemperD)
@@ -318,8 +346,9 @@ u8 MS5607B_Reset(void)
 //				
 //}
 
-u8 MS5607B_GetCaliData(uint16_t *baroCali)
+u8 MS5607B_GetCaliData(MS5607B_CaliData *CaliStructure)
 {
+#ifndef MS5607B_USE_SPI
 	u8 errStatus=1;
 	unsigned char calicnt,tmpData[2];//tmpMSB,tmpLSB;
 
@@ -329,6 +358,14 @@ u8 MS5607B_GetCaliData(uint16_t *baroCali)
 		baroCali[calicnt] = (tmpData[0]<<8)|tmpData[1];
 	}	
 	return errStatus;
+#else
+	u8 i;
+	u8 byteBuffer[3]={0};
+
+	MS5607B_SPI_SendByte(CMD_PROM_RD_C1);
+	for(i=0; i<3; i++)
+		byteBuffer[i] = MS5607B_SPI_ReadByte();
+	CaliStructure->
 }
 
 
