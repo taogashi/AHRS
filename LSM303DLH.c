@@ -582,17 +582,19 @@ u8 LSM303DLH_Magn_Read_RawData(s16* out)
 u8 LSM303DLH_Read_Mag(s16* out)
 {
 	s16 rawData[3];
+	s16 unCalibrated[3];
 
 	if(1==LSM303DLH_Magn_Read_RawData(rawData))
 	{	
-		out[0]=-rawData[1]+31;
-		out[1]=-rawData[0]-142;
-		out[2]=-rawData[2]+2;
+		unCalibrated[0]=-rawData[1];
+		unCalibrated[1]=-rawData[0];
+		unCalibrated[2]=-rawData[2];
+			
+		/* put your calibrating code here*/
+		out[0] = unCalibrated[0];
+		out[1] = unCalibrated[1];
+		out[2] = unCalibrated[2];
 		
-		out[0] *= 1.12;
-		out[1] *= 1.27;
-		out[2] *= 1.37;
-	
 		return 1;
 	}
 	return 0;
@@ -706,21 +708,29 @@ void LSM303DLH_Raw2Mag(u8 *raw, s16 *mag)
 {
 	u8 i;
 	s16 raw_s16[3];
+	s16 unCalibrated[3];
 	
 	for(i=0; i<3; i++)
 		raw_s16[i]=((s16)((u16)raw[2*i] << 8) + raw[2*i+1]);
 
-	mag[0]=-raw_s16[1];
-	mag[1]=-raw_s16[0];
-	mag[2]=-raw_s16[2];
+	unCalibrated[0]=-raw_s16[1];
+	unCalibrated[1]=-raw_s16[0];
+	unCalibrated[2]=-raw_s16[2];
 	
-//	mag[0]=-raw_s16[1]+1;
-//	mag[1]=-raw_s16[0]-95;
-//	mag[2]=-raw_s16[2]-46;
-//	
-//	mag[0] *= 1.26;
-//	mag[1] *= 1.141;
-//	mag[2] *= 1.352;	
+	/* put your calibrating code here*/
+	/* for example: leave uncalibrated*/
+	//mag[0] = unCalibrated[0];
+	//mag[1] = unCalibrated[1];
+	//mag[2] = unCalibrated[2];
+	
+	/* for example: with center [-1, 95, 46], radii [1.26, 1.141, 1.352]*/
+	//	mag[0]=-raw_s16[1]+1;
+	//	mag[1]=-raw_s16[0]-95;
+	//	mag[2]=-raw_s16[2]-46;
+	//	
+	//	mag[0] *= 1.26;
+	//	mag[1] *= 1.141;
+	//	mag[2] *= 1.352;	
 }
 
 /*
