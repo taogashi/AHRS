@@ -284,10 +284,10 @@
       <FileType>1</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>44</ColumnNumber>
+      <ColumnNumber>46</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>18</TopLine>
-      <CurrentLine>34</CurrentLine>
+      <TopLine>23</TopLine>
+      <CurrentLine>41</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>..\User\main.c</PathWithFileName>
       <FilenameWithoutPath>main.c</FilenameWithoutPath>
@@ -318,8 +318,8 @@
       <Focus>0</Focus>
       <ColumnNumber>7</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>2</TopLine>
-      <CurrentLine>13</CurrentLine>
+      <TopLine>0</TopLine>
+      <CurrentLine>0</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\ledTask.c</PathWithFileName>
       <FilenameWithoutPath>ledTask.c</FilenameWithoutPath>
@@ -332,10 +332,10 @@
       <FileType>1</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>1</ColumnNumber>
+      <ColumnNumber>15</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>441</TopLine>
-      <CurrentLine>489</CurrentLine>
+      <TopLine>486</TopLine>
+      <CurrentLine>503</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\AHRS.c</PathWithFileName>
       <FilenameWithoutPath>AHRS.c</FilenameWithoutPath>
@@ -630,8 +630,8 @@
       <Focus>0</Focus>
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>140</TopLine>
-      <CurrentLine>145</CurrentLine>
+      <TopLine>0</TopLine>
+      <CurrentLine>0</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>..\StartUp\startup_stm32f10x_md.s</PathWithFileName>
       <FilenameWithoutPath>startup_stm32f10x_md.s</FilenameWithoutPath>
@@ -702,8 +702,8 @@
       <Focus>0</Focus>
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>1967</TopLine>
-      <CurrentLine>1975</CurrentLine>
+      <TopLine>0</TopLine>
+      <CurrentLine>0</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>..\Source\tasks.c</PathWithFileName>
       <FilenameWithoutPath>tasks.c</FilenameWithoutPath>
@@ -822,8 +822,8 @@
       <Focus>0</Focus>
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>59</TopLine>
-      <CurrentLine>65</CurrentLine>
+      <TopLine>0</TopLine>
+      <CurrentLine>0</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\ITG3200.c</PathWithFileName>
       <FilenameWithoutPath>ITG3200.c</FilenameWithoutPath>
@@ -854,8 +854,8 @@
       <Focus>0</Focus>
       <ColumnNumber>8</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>606</TopLine>
-      <CurrentLine>730</CurrentLine>
+      <TopLine>0</TopLine>
+      <CurrentLine>0</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\LSM303DLH.c</PathWithFileName>
       <FilenameWithoutPath>LSM303DLH.c</FilenameWithoutPath>
@@ -870,8 +870,8 @@
       <Focus>0</Focus>
       <ColumnNumber>34</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>4</TopLine>
-      <CurrentLine>9</CurrentLine>
+      <TopLine>0</TopLine>
+      <CurrentLine>0</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\spi.c</PathWithFileName>
       <FilenameWithoutPath>spi.c</FilenameWithoutPath>
