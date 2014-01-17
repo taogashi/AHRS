@@ -20,6 +20,14 @@
 *.exe
 *.out
 *.app
+*.hex
 
 # Other files
-*.uvgui*.*
+*.uvgui*
+*.bak
+*.dep
+*.axf
+*.htm
+*.lnp
+*.sct
+*.iex
