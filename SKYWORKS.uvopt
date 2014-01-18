@@ -339,10 +339,10 @@
       <FileType>1</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>0</ColumnNumber>
+      <ColumnNumber>30</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>66</TopLine>
-      <CurrentLine>491</CurrentLine>
+      <TopLine>65</TopLine>
+      <CurrentLine>488</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\AHRS.c</PathWithFileName>
       <FilenameWithoutPath>AHRS.c</FilenameWithoutPath>
@@ -643,10 +643,10 @@
       <FileType>1</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>20</ColumnNumber>
+      <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>0</TopLine>
-      <CurrentLine>0</CurrentLine>
+      <TopLine>1940</TopLine>
+      <CurrentLine>1946</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>..\Source\tasks.c</PathWithFileName>
       <FilenameWithoutPath>tasks.c</FilenameWithoutPath>
@@ -779,10 +779,10 @@
       <FileType>1</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>5</ColumnNumber>
+      <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>167</TopLine>
-      <CurrentLine>372</CurrentLine>
+      <TopLine>200</TopLine>
+      <CurrentLine>449</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\MS5607B.c</PathWithFileName>
       <FilenameWithoutPath>MS5607B.c</FilenameWithoutPath>

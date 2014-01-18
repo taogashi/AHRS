@@ -22,6 +22,7 @@
 *.out
 *.app
 *.hex
+*~
 
 # Other files
 *.uvgui*.*
