@@ -464,35 +464,46 @@ void vAHRSReadRaw(void* pvParameters)
 
 void vAHRSReadBaroHeight(void* pvParameters)
 {
+	u8 i=0;
 	MS5607B_CaliData caliStructre;
 	MS5607B_ProcData midVal;
 	uint32_t D1;
 	uint32_t D2;
 	
-	int32_t temperature;
+	double temperature;
 	int32_t pressure;
-//	BaroHeightType bht,trashCan;
-//	float height,h0=0.0;
-//	s16 height_cm;
-//	u8 i;
+	
+	float height;
 	
 	MS5607B_Reset();
 	vTaskDelay((portTickType)5/portTICK_RATE_MS);
 	MS5607B_GetCaliData(&caliStructre);
+	
+	/* initialize */
+	while(i++ < 250)
+	{
+		MS5607B_StartTemperatureADC(OSR_4096);
+		vTaskDelay((portTickType)10/portTICK_RATE_MS);
+		MS5607B_ReadADC(&D2);
+		temperature = (double)MS5607B_GetTemperature(&midVal, D2, &caliStructre);
+		MS5607B_StartPressureADC(OSR_4096);
+		vTaskDelay((portTickType)10/portTICK_RATE_MS);
+		MS5607B_ReadADC(&D1);
+		pressure = MS5607B_GetPressure(&midVal, D1, &caliStructre);
+	}
 	
 	for(;;)
 	{
 		MS5607B_StartTemperatureADC(OSR_4096);
 		vTaskDelay((portTickType)10/portTICK_RATE_MS);
 		MS5607B_ReadADC(&D2);
-		temperature = MS5607B_GetTemperature(&midVal, D2, &caliStructre);
+		temperature = 0.998*temperature + 0.002*MS5607B_GetTemperature(&midVal, D2, &caliStructre);
 		MS5607B_StartPressureADC(OSR_4096);
 		vTaskDelay((portTickType)10/portTICK_RATE_MS);
 		MS5607B_ReadADC(&D1);
 		pressure = MS5607B_GetPressure(&midVal, D1, &caliStructre);
 		
-		temperature = temperature;
-		pressure = pressure;
+		
 	}
 }
 

@@ -402,39 +402,38 @@ int32_t MS5607B_GetPressure(MS5607B_ProcData *midVal,uint32_t D1,MS5607B_CaliDat
 {
 	double OFF;
 	double SENS;
-//	double T2;
-//	double OFF2;
-//	double SENS2;
+	double T2;
+	double OFF2;
+	double SENS2;
 	
 	double P;
 
 	OFF = (double)CaliStructure->C2*((uint32_t)1<<17)+ (double)CaliStructure->C4 * midVal->dT * 0.015625;
 	SENS = (double)CaliStructure->C1*((uint32_t)1<<16) + (double)CaliStructure->C3 * midVal->dT * 0.0078125;
 
-//	if(midVal->TEMP < 2000)
-//	{		
-//		T2 = ((int64_t)midVal->dT*midVal->dT)>>31;
-//		OFF2 = (61*((int64_t)midVal->TEMP-2000)*((int64_t)midVal->TEMP-2000))>>4;
-//		SENS2 = 2*((int64_t)midVal->TEMP-2000)*((int64_t)midVal->TEMP-2000);
-//		if(midVal->TEMP < -1500)
-//		{
-//		 	OFF2 = OFF2 + 15*((int64_t)midVal->TEMP+1500)*((int64_t)midVal->TEMP+1500);
-//			SENS2 = SENS2 + 8*((int64_t)midVal->TEMP+1500)*((int64_t)midVal->TEMP+1500);
-//		}
-//	}
-//	else
-//	{
-//		T2 = 0;
-//		OFF2 = 0;
-//		SENS2 = 0;
-//	}
+	if(midVal->TEMP < 2000)
+	{		
+		T2 = (double)midVal->dT*midVal->dT*0.0000000004656612873077392578125;
+		OFF2 = 61*((double)midVal->TEMP-2000)*(midVal->TEMP-2000)*0.0625;
+		SENS2 = 2*((double)midVal->TEMP-2000)*(midVal->TEMP-2000);
+		if(midVal->TEMP < -1500)
+		{
+		 	OFF2 = OFF2 + 15*((double)midVal->TEMP+1500)*(midVal->TEMP+1500);
+			SENS2 = SENS2 + 8*((double)midVal->TEMP+1500)*(midVal->TEMP+1500);
+		}
+	}
+	else
+	{
+		T2 = 0.0;
+		OFF2 = 0.0;
+		SENS2 = 0.0;
+	}
 
-//	midVal->TEMP = midVal->TEMP-T2;
-//	OFF = OFF - OFF2;
-//	SENS = SENS - SENS2;	
+	midVal->TEMP = midVal->TEMP-(int32_t)T2;
+	OFF = OFF - OFF2;
+	SENS = SENS - SENS2;	
 
-//	P = (D1*SENS>>21 - OFF)
-	P = (D1*SENS/((uint32_t)1<<21)-OFF)/((uint32_t)1<<15);
+	P = (D1*SENS*0.000000476837158203125-OFF)*0.000030517578125;
 
 	return (int32_t)P;	
 }
