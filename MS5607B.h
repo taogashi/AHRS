@@ -5,13 +5,21 @@
 
 typedef struct
 {
-	uint16_t SENS_T1;
-	uint16_t OFF_T1;
-	uint16_t TCS;
-	uint16_t TCO;
-	uint16_t T_REF;
-	uint16_t TEMPSENS;
+	uint16_t FS;
+	uint16_t C1;
+	uint16_t C2;
+	uint16_t C3;
+	uint16_t C4;
+	uint16_t C5;
+	uint16_t C6;
+	uint16_t CR;
 }MS5607B_CaliData;
+
+typedef struct
+{
+	int32_t dT;
+    int32_t TEMP;
+}MS5607B_ProcData;
 
 typedef struct
 {
@@ -34,12 +42,14 @@ typedef struct
 #define OSR_2048				0x06
 #define OSR_4096				0x08
 
-#define CMD_PROM_RD_C1 		0xA0 // Prom read command
-#define CMD_PROM_RD_C2 		0xA2 // Prom read command
-#define CMD_PROM_RD_C3 		0xA4 // Prom read command
-#define CMD_PROM_RD_C4 		0xA6 // Prom read command
-#define CMD_PROM_RD_C5 		0xA8 // Prom read command
-#define CMD_PROM_RD_C6 		0xAA // Prom read command
+#define CMD_PROM_RD_FS		0xA0
+#define CMD_PROM_RD_C1 		0xA2 // Prom read command
+#define CMD_PROM_RD_C2 		0xA4 // Prom read command
+#define CMD_PROM_RD_C3 		0xA6 // Prom read command
+#define CMD_PROM_RD_C4 		0xA8 // Prom read command
+#define CMD_PROM_RD_C5 		0xAA // Prom read command
+#define CMD_PROM_RD_C6 		0xAC // Prom read command
+#define CMD_PROM_RD_CRC		0xAE
 
 
 void MS5607B_I2C_Init(void);
@@ -61,9 +71,9 @@ u8 MS5607B_StartTemperatureADC(unsigned char OSR);
 //
 u8 MS5607B_ReadADC(uint32_t *Databuff);
 //
-int32_t	MS5607B_GetTemperature(uint32_t D2, MS5607B_CaliData *CaliStructure);
+int32_t	MS5607B_GetTemperature(MS5607B_ProcData *midVal,uint32_t D2,MS5607B_CaliData *CaliStructure);
 //
-int32_t MS5607B_GetPressure(uint32_t D1, MS5607B_CaliData *CaliStructure);
+int32_t MS5607B_GetPressure(MS5607B_ProcData *midVal,uint32_t D1,MS5607B_CaliData *CaliStructure);
 
 /************/
 //unsigned char MS5607B_StateUpdate_I2C(uint32_t *PressureD, uint32_t *TemperD);

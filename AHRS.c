@@ -87,11 +87,17 @@ void vAHRSConfig(void* pvParameters)
 	}
 	else
 	{
-		xTaskCreate(vAHRSReadRaw
-				    ,(signed char *)"ahrs_read"
-						,configMINIMAL_STACK_SIZE+128
-						,NULL,mainFLASH_TASK_PRIORITY+3
-						,(xTaskHandle *)NULL);
+//		xTaskCreate(vAHRSReadRaw
+//				    ,(signed char *)"ahrs_read"
+//						,configMINIMAL_STACK_SIZE+128
+//						,NULL,mainFLASH_TASK_PRIORITY+3
+//						,(xTaskHandle *)NULL);
+		xTaskCreate(vAHRSReadBaroHeight
+		            ,(signed char *)"baro"
+					,configMINIMAL_STACK_SIZE+128
+					,NULL
+					,mainFLASH_TASK_PRIORITY+2
+					,(xTaskHandle *)NULL);
 	}
 	Blinks(LED2,1);
 	vTaskDelete(NULL);	
@@ -332,6 +338,12 @@ void vAHRSCali(void* pvParameters)
 				,configMINIMAL_STACK_SIZE+128
 				,NULL,mainFLASH_TASK_PRIORITY+2
 				,(xTaskHandle *)NULL);
+	xTaskCreate(vAHRSReadBaroHeight
+		            ,(signed char *)"baro"
+					,configMINIMAL_STACK_SIZE+128
+					,NULL
+					,mainFLASH_TASK_PRIORITY+2
+					,(xTaskHandle *)NULL);
 	vTaskDelete(NULL);
 }
 
@@ -450,37 +462,39 @@ void vAHRSReadRaw(void* pvParameters)
 }
 
 
-//void vAHRSReadBaroHeight(void* pvParameters)
-//{
-//	BaroDataType bdt;
+void vAHRSReadBaroHeight(void* pvParameters)
+{
+	MS5607B_CaliData caliStructre;
+	MS5607B_ProcData midVal;
+	uint32_t D1;
+	uint32_t D2;
+	
+	int32_t temperature;
+	int32_t pressure;
 //	BaroHeightType bht,trashCan;
 //	float height,h0=0.0;
 //	s16 height_cm;
 //	u8 i;
-
-//	for(i=0;i<20;i++)
-//	{
-//		LPS331AP_Read_RawData(&bdt);
-//		vTaskDelay((portTickType)50/portTICK_RATE_MS);
-//	}
-
-//	LPS331AP_Read_RawData(&bdt);
-//	h0 = -(bdt.press*0.002044897)+8488.0;
-//	vTaskDelay((portTickType)50/portTICK_RATE_MS);
-//	
-//	for(;;)
-//	{
-//		LPS331AP_Read_RawData(&bdt);
-//		height=-(bdt.press*0.002044897)+8488.0-h0;
-//		height_cm=(s16)(height*100);
-//		bht.baroheight = height_cm;
-//		bht.check = *(u8 *)(&(bht.baroheight)) + *((u8 *)(&(bht.baroheight))+1);
-
-//		xQueueReceive(xBaroHeightQueue,&trashCan,0);
-//		xQueueSend(xBaroHeightQueue,&bht,0);
-//		vTaskDelay((portTickType)50/portTICK_RATE_MS);
-//	}
-//}
+	
+	MS5607B_Reset();
+	vTaskDelay((portTickType)5/portTICK_RATE_MS);
+	MS5607B_GetCaliData(&caliStructre);
+	
+	for(;;)
+	{
+		MS5607B_StartTemperatureADC(OSR_4096);
+		vTaskDelay((portTickType)10/portTICK_RATE_MS);
+		MS5607B_ReadADC(&D2);
+		temperature = MS5607B_GetTemperature(&midVal, D2, &caliStructre);
+		MS5607B_StartPressureADC(OSR_4096);
+		vTaskDelay((portTickType)10/portTICK_RATE_MS);
+		MS5607B_ReadADC(&D1);
+		pressure = MS5607B_GetPressure(&midVal, D1, &caliStructre);
+		
+		temperature = temperature;
+		pressure = pressure;
+	}
+}
 
 float Mean(float* sample,u16 N)
 {

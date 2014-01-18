@@ -68,12 +68,6 @@ int main( void )
 //					,NULL
 //					,mainFLASH_TASK_PRIORITY+2
 //					,(xTaskHandle *)NULL);
-//		xTaskCreate(vAHRSReadBaroHeight
-//		            ,(signed char *)"baro"
-//					,configMINIMAL_STACK_SIZE+128
-//					,NULL
-//					,mainFLASH_TASK_PRIORITY+1
-//					,(xTaskHandle *)NULL);
 		
 		/* Start the scheduler. */
 		vTaskStartScheduler();

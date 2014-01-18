@@ -2,7 +2,10 @@
 #include "HAL_MS5607B.h"
 #include "OSConfig.h"
 
-/*I2C Group*/
+void MS5607B_Delay(u32 n)
+{
+	for(;n>0;n--);
+}
 
 void MS5607B_I2C_Init(void)
 {
@@ -233,7 +236,11 @@ u8 MS5607B_StartPressureADC(unsigned char OSR)
 	return errStatus;
 #else
 	u8 cmd = CMD_ADC_CONV_PRES | OSR;
+	MS5607B_SPI_CS_LOW();
+	MS5607B_Delay(5);
 	MS5607B_SPI_SendByte(cmd);
+	MS5607B_Delay(5);
+	MS5607B_SPI_CS_HIGH();
 	return 1;
 #endif
 }
@@ -248,7 +255,11 @@ u8 MS5607B_StartTemperatureADC(unsigned char OSR)
 	return errStatus;
 #else
 	u8 cmd = CMD_ADC_CONV_TEMP | OSR;
+	MS5607B_SPI_CS_LOW();
+	MS5607B_Delay(5);
 	MS5607B_SPI_SendByte(cmd);
+	MS5607B_Delay(5);
+	MS5607B_SPI_CS_HIGH();
 	return 1;
 #endif
 }
@@ -262,89 +273,14 @@ u8 MS5607B_Reset(void)
 	return errStatus;
 #else
 	u8 cmd = CMD_RESET;
+	MS5607B_SPI_CS_LOW();
+	MS5607B_Delay(5);
 	MS5607B_SPI_SendByte(cmd);
+	MS5607B_Delay(5);
+	MS5607B_SPI_CS_HIGH();
 	return 1;
 #endif
 }
-
-//unsigned char MS5607B_StateUpdate_I2C(uint32_t *PressureD, uint32_t *TemperD)
-//{
-//	static unsigned char stateofMS5607B=0x00;	
-//	
-//	static unsigned char convertPressureCNT=0;
-//
-//	uint32_t tmptime;
-//	unsigned char tstate,retval = 0;
-//
-//	// 是否转换完成
-//	if(stateofMS5607B & 0x06)
-//	{	
-//		tmptime = GetSystikMS5607B();	
-//		if( tmptime > 1000)	 	//1000 对应systick计 10ms
-//		{
-//			stateofMS5607B |= 0x01;
-//		}
-//	}
-//	// 状态机
-//	switch (stateofMS5607B)
-//	{
-//		case 0x00:
-//		case 0x01:
-//			if(convertPressureCNT>30) 	//气压测量10次启动一次温度测量
-//			{
-//				convertPressureCNT=0;
-//				//触发温度测量
-//				tstate=MS5607B_StartTemperatureADC_I2C();
-////				if(tstate == 0)
-////					return tstate;
-//				ResetSystikMS5607B();
-//				stateofMS5607B |= 0x04;
-//			}
-//			else	  
-//			{
-//				//触发气压测量
-//				tstate=MS5607B_StartPressureADC_I2C();
-////				if(tstate == 0)
-////					return tstate;
-//				ResetSystikMS5607B();
-//				stateofMS5607B |= 0x02;				
-//			}
-//			retval=0;
-//			break;
-//		
-//		case 0x05:		//温度测量完成
-//			stateofMS5607B = 0x00;
-//			tstate=MS5607B_GetData_I2C(TemperD);	  	//得到温度测量原始值
-////			if(tstate == 0)
-////				return tstate;			
-//			tstate = MS5607B_StartPressureADC_I2C();		//并触发气压测量							
-////			if(tstate == 0)
-////				return tstate;		
-//			ResetSystikMS5607B();
-//			stateofMS5607B |= 0x02;
-//
-//			convertPressureCNT=0;
-//			retval=0;
-//			break;
-//
-//		case 0x03:	   	//气压测量完成
-//			stateofMS5607B = 0x00;
-//			tstate=MS5607B_GetData_I2C(PressureD);		//得到气压测量原始值							 
-////			if(tstate == 0)
-////				return tstate;
-//			convertPressureCNT++;
-//
-//			retval=1;
-//			break;
-//	
-//		default:  		//other impossible condition
-//			retval = 0;
-//			break;
-//	}
-//
-//	return retval;
-//				
-//}
 
 u8 MS5607B_GetCaliData(MS5607B_CaliData *CaliStructure)
 {
@@ -359,15 +295,101 @@ u8 MS5607B_GetCaliData(MS5607B_CaliData *CaliStructure)
 	}	
 	return errStatus;
 #else
-	u8 i;
-	u8 byteBuffer[3]={0};
+	u8 byteBuffer[2]={0};
 
+	MS5607B_SPI_CS_LOW();
+	MS5607B_Delay(5);
 	MS5607B_SPI_SendByte(CMD_PROM_RD_C1);
-	for(i=0; i<3; i++)
-		byteBuffer[i] = MS5607B_SPI_ReadByte();
-	CaliStructure->
+	byteBuffer[0] = MS5607B_SPI_ReadByte();
+	byteBuffer[1] = MS5607B_SPI_ReadByte();
+	CaliStructure->C1 = ((0xffff & byteBuffer[0])<<8)| byteBuffer[1];
+	MS5607B_Delay(5);
+	MS5607B_SPI_CS_HIGH();
+	
+	MS5607B_Delay(5);
+	MS5607B_SPI_CS_LOW();
+	MS5607B_Delay(5);
+	MS5607B_SPI_SendByte(CMD_PROM_RD_C2);
+	byteBuffer[0] = MS5607B_SPI_ReadByte();
+	byteBuffer[1] = MS5607B_SPI_ReadByte();
+	CaliStructure->C2 = ((0xffff & byteBuffer[0])<<8)| byteBuffer[1];
+	MS5607B_Delay(5);
+	MS5607B_SPI_CS_HIGH();
+	
+	MS5607B_Delay(5);
+	MS5607B_SPI_CS_LOW();
+	MS5607B_Delay(5);
+	MS5607B_SPI_SendByte(CMD_PROM_RD_C3);
+	byteBuffer[0] = MS5607B_SPI_ReadByte();
+	byteBuffer[1] = MS5607B_SPI_ReadByte();
+	CaliStructure->C3 = ((0xffff & byteBuffer[0])<<8)| byteBuffer[1];
+	MS5607B_Delay(5);
+	MS5607B_SPI_CS_HIGH();
+	
+	MS5607B_Delay(5);
+	MS5607B_SPI_CS_LOW();
+	MS5607B_Delay(5);
+	MS5607B_SPI_SendByte(CMD_PROM_RD_C4);
+	byteBuffer[0] = MS5607B_SPI_ReadByte();
+	byteBuffer[1] = MS5607B_SPI_ReadByte();
+	CaliStructure->C4 = ((0xffff & byteBuffer[0])<<8)| byteBuffer[1];
+	MS5607B_Delay(5);
+	MS5607B_SPI_CS_HIGH();
+	
+	MS5607B_Delay(5);
+	MS5607B_SPI_CS_LOW();
+	MS5607B_Delay(5);
+	MS5607B_SPI_SendByte(CMD_PROM_RD_C5);
+	byteBuffer[0] = MS5607B_SPI_ReadByte();
+	byteBuffer[1] = MS5607B_SPI_ReadByte();
+	CaliStructure->C5 = ((0xffff & byteBuffer[0])<<8)| byteBuffer[1];
+	MS5607B_Delay(5);
+	MS5607B_SPI_CS_HIGH();
+	
+	MS5607B_Delay(5);
+	MS5607B_SPI_CS_LOW();
+	MS5607B_Delay(5);
+	MS5607B_SPI_SendByte(CMD_PROM_RD_C6);
+	byteBuffer[0] = MS5607B_SPI_ReadByte();
+	byteBuffer[1] = MS5607B_SPI_ReadByte();
+	CaliStructure->C6 = ((0xffff & byteBuffer[0])<<8)| byteBuffer[1];
+	
+//	MS5607B_SPI_SendByte(CMD_PROM_RD_CRC);
+//	byteBuffer[0] = MS5607B_SPI_ReadByte();
+//	byteBuffer[1] = MS5607B_SPI_ReadByte();
+//	CaliStructure->CR = ((0xffff & byteBuffer[0])<<8)| byteBuffer[1];
+	
+	MS5607B_Delay(5);
+	MS5607B_SPI_CS_HIGH();
+	return 1;
+#endif
 }
 
+u8 MS5607B_ReadADC(uint32_t *Databuff)
+{
+	u8 buffer[3];
+	u8 i;
+	*Databuff = 0;
+#ifndef MS5607B_USE_SPI
+
+#else
+	MS5607B_SPI_CS_LOW();
+	MS5607B_Delay(5);	
+	MS5607B_SPI_SendByte(CMD_ADC_READ);
+	
+	for(i=0; i<3; i++)
+	{
+		*Databuff <<= 8;
+		buffer[i] = MS5607B_SPI_ReadByte();
+		*Databuff |= buffer[i];
+	}
+	
+	MS5607B_Delay(5);
+	MS5607B_SPI_CS_HIGH();
+		
+	return 1;
+#endif
+}
 
 /**
   * @brief  get real pressure data.
@@ -376,47 +398,45 @@ u8 MS5607B_GetCaliData(MS5607B_CaliData *CaliStructure)
 			D2 : original temperature data					  
   * @retval Real pressure data, 110002=110.002 kPa.
   */
-int32_t MS5607B_GetPressure(uint32_t D1, uint32_t D2, uint16_t *baroCali)
+int32_t MS5607B_GetPressure(MS5607B_ProcData *midVal,uint32_t D1,MS5607B_CaliData *CaliStructure)
 {
-	float tmpP;
-	float dT,TEMP;
-	float OFF,SENS;
-	float OFF2,SENS2,T2;
-		
-	//tmpP = (int32_t)( ( ((uint64_t)D1)*C[0])>>36  - (int64_t)(((uint64_t)C[1])<<2) );
+	double OFF;
+	double SENS;
+//	double T2;
+//	double OFF2;
+//	double SENS2;
+	
+	double P;
 
-						 	    
-	dT = D2 - baroCali[4]*(float)(1<<8);
-	TEMP = (float)(2000 + ((dT*baroCali[5]))/((float)(1<<23)));
+	OFF = (double)CaliStructure->C2*((uint32_t)1<<17)+ (double)CaliStructure->C4 * midVal->dT * 0.015625;
+	SENS = (double)CaliStructure->C1*((uint32_t)1<<16) + (double)CaliStructure->C3 * midVal->dT * 0.0078125;
 
-	OFF = baroCali[1]*(float)(1<<17) + (baroCali[3]*(float)dT)/((float)(1<<6));
-	SENS = baroCali[0]*(float)(1<<16) + (baroCali[2]*(float)dT)/((float)(1<<7));
+//	if(midVal->TEMP < 2000)
+//	{		
+//		T2 = ((int64_t)midVal->dT*midVal->dT)>>31;
+//		OFF2 = (61*((int64_t)midVal->TEMP-2000)*((int64_t)midVal->TEMP-2000))>>4;
+//		SENS2 = 2*((int64_t)midVal->TEMP-2000)*((int64_t)midVal->TEMP-2000);
+//		if(midVal->TEMP < -1500)
+//		{
+//		 	OFF2 = OFF2 + 15*((int64_t)midVal->TEMP+1500)*((int64_t)midVal->TEMP+1500);
+//			SENS2 = SENS2 + 8*((int64_t)midVal->TEMP+1500)*((int64_t)midVal->TEMP+1500);
+//		}
+//	}
+//	else
+//	{
+//		T2 = 0;
+//		OFF2 = 0;
+//		SENS2 = 0;
+//	}
 
-	if(TEMP < 2000)
-	{		
-		T2 = (((float)dT)*dT)/((float)((uint32_t)0x00000001<<31));
-		OFF2 = (61*((float)(TEMP-2000))*(TEMP-2000))/((float)(1<<4));
-		SENS2 = 2*((float)(TEMP-2000))*(TEMP-2000);
-		if(TEMP < -1500)
-		{
-		 	OFF2 = OFF2 + 15*(TEMP+1500)*(TEMP+1500);
-			SENS2 = SENS2 + 8*(TEMP+1500)*(TEMP+1500);
-		}
-	}
-	else
-	{
-		T2 = 0;
-		OFF2 = 0;
-		SENS2 = 0;
-	}
+//	midVal->TEMP = midVal->TEMP-T2;
+//	OFF = OFF - OFF2;
+//	SENS = SENS - SENS2;	
 
-	TEMP = TEMP-T2;
-	OFF = OFF - OFF2;
-	SENS = SENS - SENS2;	
+//	P = (D1*SENS>>21 - OFF)
+	P = (D1*SENS/((uint32_t)1<<21)-OFF)/((uint32_t)1<<15);
 
-	tmpP = ( ((float)(D1*SENS))/((float)(1<<21)) - OFF) / ((float)(1<<15));
-
-	return (int32_t)tmpP;	
+	return (int32_t)P;	
 }
 
 /**
@@ -426,17 +446,12 @@ int32_t MS5607B_GetPressure(uint32_t D1, uint32_t D2, uint16_t *baroCali)
 			D2 : original temperature data					  
   * @retval Real temperature data, 2000=20.00 degree.
   */										 
-int32_t	MS5607B_GetTemperature(uint32_t D1, uint32_t D2, uint16_t *baroCali)
+int32_t	MS5607B_GetTemperature(MS5607B_ProcData *midVal,uint32_t D2,MS5607B_CaliData *CaliStructure)
 {	
-	float dT;
-	float tmpTEMP;
-
-//	dT = D2 - (C[4]*0x0001<<8);
-//	tmpTEMP = 2000 + (dT*C[5])/(uint32_t)(0x00000001<<23);
-	dT = D2 - baroCali[4]*(float)(1<<8);
-	tmpTEMP = (float)2000 + dT*(baroCali[5]/((float)(1<<23)));
+	midVal->dT = D2 - ((int32_t)CaliStructure->C5<<8);
+	midVal->TEMP = (int32_t)2000 + ((midVal->dT*(int64_t)CaliStructure->C6)>>23);
 	
-	return (int32_t)tmpTEMP;
+	return midVal->TEMP;
 }
 
 //u8 MS5607B_UpdataData(MS5607B_DataType *data)
