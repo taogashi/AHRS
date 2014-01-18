@@ -471,7 +471,8 @@ void vAHRSReadBaroHeight(void* pvParameters)
 	uint32_t D2;
 	
 	double temperature;
-	int32_t pressure;
+	double pressure_orig;
+	double pressure_cur;
 	
 	float height;
 	
@@ -489,7 +490,7 @@ void vAHRSReadBaroHeight(void* pvParameters)
 		MS5607B_StartPressureADC(OSR_4096);
 		vTaskDelay((portTickType)10/portTICK_RATE_MS);
 		MS5607B_ReadADC(&D1);
-		pressure = MS5607B_GetPressure(&midVal, D1, &caliStructre);
+		pressure_orig = (double)MS5607B_GetPressure(&midVal, D1, &caliStructre);
 	}
 	
 	for(;;)
@@ -501,7 +502,7 @@ void vAHRSReadBaroHeight(void* pvParameters)
 		MS5607B_StartPressureADC(OSR_4096);
 		vTaskDelay((portTickType)10/portTICK_RATE_MS);
 		MS5607B_ReadADC(&D1);
-		pressure = MS5607B_GetPressure(&midVal, D1, &caliStructre);
+		pressure_cur = MS5607B_GetPressure(&midVal, D1, &caliStructre);
 		
 		
 	}
