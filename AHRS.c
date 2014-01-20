@@ -16,6 +16,7 @@
 #define GRAVITY 9.8015
 
 xQueueHandle xAccCaliQueue;
+xQueueHandle baroQueue;
 xQueueHandle xEKFQueue;
 
 AccCaliType accCaliStructure;
@@ -87,11 +88,11 @@ void vAHRSConfig(void* pvParameters)
 	}
 	else
 	{
-//		xTaskCreate(vAHRSReadRaw
-//				    ,(signed char *)"ahrs_read"
-//						,configMINIMAL_STACK_SIZE+128
-//						,NULL,mainFLASH_TASK_PRIORITY+3
-//						,(xTaskHandle *)NULL);
+		xTaskCreate(vAHRSReadRaw
+				    ,(signed char *)"ahrs_read"
+						,configMINIMAL_STACK_SIZE+128
+						,NULL,mainFLASH_TASK_PRIORITY+3
+						,(xTaskHandle *)NULL);
 		xTaskCreate(vAHRSReadBaroHeight
 		            ,(signed char *)"baro"
 					,configMINIMAL_STACK_SIZE+128
@@ -443,6 +444,7 @@ void vAHRSReadRaw(void* pvParameters)
 			MAG3110_Raw2Mag(mag_raw, sdt.mag);
 		}
 
+		xQueueReceive(baroQueue, &comt.height, 0);
 		for(i=0;i<3;i++) comt.data[i]=(s16)(sdt.gyr[i]*4000.0);
 		for(i=0;i<3;i++) comt.data[i+3]=(s16)(sdt.acc[i]*1000.0);
 		for(i=0;i<3;i++) comt.data[i+6]=sdt.mag[i];
@@ -461,7 +463,6 @@ void vAHRSReadRaw(void* pvParameters)
 	}
 }
 
-
 void vAHRSReadBaroHeight(void* pvParameters)
 {
 	u8 i=0;
@@ -473,7 +474,6 @@ void vAHRSReadBaroHeight(void* pvParameters)
 	double temperature;
 	double pressure_orig;
 	double pressure_cur;
-	
 	float height;
 	
 	MS5607B_Reset();
@@ -498,13 +498,15 @@ void vAHRSReadBaroHeight(void* pvParameters)
 		MS5607B_StartTemperatureADC(OSR_4096);
 		vTaskDelay((portTickType)10/portTICK_RATE_MS);
 		MS5607B_ReadADC(&D2);
-		temperature = 0.998*temperature + 0.002*MS5607B_GetTemperature(&midVal, D2, &caliStructre);
+		temperature = 0.99*temperature + 0.01*MS5607B_GetTemperature(&midVal, D2, &caliStructre);
 		MS5607B_StartPressureADC(OSR_4096);
 		vTaskDelay((portTickType)10/portTICK_RATE_MS);
 		MS5607B_ReadADC(&D1);
 		pressure_cur = MS5607B_GetPressure(&midVal, D1, &caliStructre);
 		
-		
+		height = 18400*(1+0.00003663*temperature)*0.4343*(pressure_orig/pressure_cur - 1);
+		xQueueSend(baroQueue, &height, 0);
+		vTaskDelay((portTickType)5/portTICK_RATE_MS);
 	}
 }
 

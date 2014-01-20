@@ -447,8 +447,8 @@ int32_t MS5607B_GetPressure(MS5607B_ProcData *midVal,uint32_t D1,MS5607B_CaliDat
   */										 
 int32_t	MS5607B_GetTemperature(MS5607B_ProcData *midVal,uint32_t D2,MS5607B_CaliData *CaliStructure)
 {	
-	midVal->dT = D2 - ((int32_t)CaliStructure->C5<<8);
-	midVal->TEMP = (int32_t)2000 + ((midVal->dT*(int64_t)CaliStructure->C6)>>23);
+	midVal->dT = (int32_t)(D2 - ((double)CaliStructure->C5*256));
+	midVal->TEMP = (int32_t)(2000 + (midVal->dT*(double)CaliStructure->C6)*0.00000011920928955078125);
 	
 	return midVal->TEMP;
 }

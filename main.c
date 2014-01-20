@@ -27,6 +27,7 @@ int main( void )
 	prvSetupHardware();
 	
 	xAccCaliQueue = xQueueCreate(1,sizeof(AccCaliType));
+	baroQueue = xQueueCreate(3,sizeof(float));
 	xEKFQueue = xQueueCreate(1,sizeof(SensorDataType));
 	EKFToComQueue = xQueueCreate(1,sizeof(AttComType));
 //	xBaroQueue=xQueueCreate(1,sizeof(baroComType));     

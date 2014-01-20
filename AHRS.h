@@ -5,6 +5,7 @@
 #include "OSConfig.h"
 
 extern xQueueHandle xAccCaliQueue;
+extern xQueueHandle baroQueue;
 extern xQueueHandle xEKFQueue;
 
 typedef struct
@@ -16,6 +17,7 @@ typedef struct
 
 typedef struct{
 	s16 data[9];//gyr[3],acc[3],mag[3]
+	float height;
 	s32 Check;//Check=sum(*(u8 *)data)
 }ComType;
 
