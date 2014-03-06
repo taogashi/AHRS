@@ -408,8 +408,8 @@ int32_t MS5607B_GetPressure(MS5607B_ProcData *midVal,uint32_t D1,MS5607B_CaliDat
 	
 	double P;
 
-	OFF = (double)CaliStructure->C2*((uint32_t)1<<17)+ (double)CaliStructure->C4 * midVal->dT * 0.015625;
-	SENS = (double)CaliStructure->C1*((uint32_t)1<<16) + (double)CaliStructure->C3 * midVal->dT * 0.0078125;
+	OFF = (double)CaliStructure->C2*131072+ (double)CaliStructure->C4 * midVal->dT * 0.015625;
+	SENS = (double)CaliStructure->C1*65536 + (double)CaliStructure->C3 * midVal->dT * 0.0078125;
 
 	if(midVal->TEMP < 2000)
 	{		
