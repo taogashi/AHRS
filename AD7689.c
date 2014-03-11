@@ -135,7 +135,7 @@ void AD7689_Read_All_Raw(u16 *out)
 	buffer[1] = AD7689_SPI_SendByte((u8)(CFGByte & 0x00ff));
 	AD7689_Delay(5);
 	AD7689_SPI_CS_HIGH();
-	AD7689_Delay(60);
+	AD7689_Delay(100);
 
 	//channel 1
 	CFGByte &= ~AD7689_INx_MASK;
@@ -146,7 +146,7 @@ void AD7689_Read_All_Raw(u16 *out)
 	buffer[3] = AD7689_SPI_SendByte((u8)(CFGByte & 0x00ff));
 	AD7689_Delay(5);
 	AD7689_SPI_CS_HIGH();
-	AD7689_Delay(60);
+	AD7689_Delay(100);
 
 	//channel 2
 	CFGByte &= ~AD7689_INx_MASK;
@@ -157,7 +157,7 @@ void AD7689_Read_All_Raw(u16 *out)
 	buffer[5] = AD7689_SPI_SendByte((u8)(CFGByte & 0x00ff));
 	AD7689_Delay(5);
 	AD7689_SPI_CS_HIGH();
-	AD7689_Delay(60);
+	AD7689_Delay(100);
 
 	//channel 4
 	CFGByte &= ~AD7689_INx_MASK;
@@ -168,7 +168,7 @@ void AD7689_Read_All_Raw(u16 *out)
 	buffer[7] = AD7689_SPI_SendByte((u8)(CFGByte & 0x00ff));
 	AD7689_Delay(5);
 	AD7689_SPI_CS_HIGH();
-	AD7689_Delay(60);
+	AD7689_Delay(100);
 	
 	//channel 5
 	CFGByte &= ~AD7689_INx_MASK;
@@ -179,7 +179,7 @@ void AD7689_Read_All_Raw(u16 *out)
 	buffer[9] = AD7689_SPI_SendByte((u8)(CFGByte & 0x00ff));
 	AD7689_Delay(5);
 	AD7689_SPI_CS_HIGH();
-	AD7689_Delay(60);
+	AD7689_Delay(100);
 	
 	//channel 6
 	CFGByte &= ~AD7689_INx_MASK;
@@ -190,7 +190,7 @@ void AD7689_Read_All_Raw(u16 *out)
 	buffer[11] = AD7689_SPI_SendByte((u8)(CFGByte & 0x00ff));
 	AD7689_Delay(5);
 	AD7689_SPI_CS_HIGH();
-	AD7689_Delay(60);
+	AD7689_Delay(100);
 
 	for(i=0;i<6;i++)
 	{
