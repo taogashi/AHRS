@@ -27,11 +27,19 @@ typedef struct{
 }BaroHeightType;
 
 typedef struct{
-	float K[12];
-}AccCaliType;
+	float acc_coef[9];
+	float acc_bias[3];
+	float gyr_scale[3];
+	float gyr_bias[3];
+	uint8_t valid;
+}IMUCaliType;
 
 void vAHRSConfig(void* pvParameters);
-void vAHRSCali(void* pvParameters);
+void vAHRSCaliTask(void* pvParameters);
+
+void AHRSAccCali(IMUCaliType *ict);
+void AHRSGyrCali(IMUCaliType *ict);
+
 void vAHRSReadRaw(void* pvParameters);
 void vAHRSReadBaroHeight(void* pvParameters);
 

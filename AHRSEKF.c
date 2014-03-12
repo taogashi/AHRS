@@ -11,41 +11,40 @@ xQueueHandle EKFToComQueue;
 volatile u8 att_data_ready=0;
 AttComType att_cmt;
 
-const float P[16]={1,	0,	0, 0,
-					0,	1,	0, 0,
-					0,	0,	1, 0,
-					0,  0,  0, 1};
-
+const float P[16]={0.000049,	0,	0, 0,
+					0,	0.000049,	0, 0,
+					0,	0,	0.000049, 0,
+					0,  0,  0, 0.000049};
 
 const float R[36]={
-	1,  	0,  	0,		0,		0,		0, 
-	0,  	1,  	0,		0,		0,		0,
-	0,  	0,  	1,		0,		0,		0,
-	0,		0,		0,		15,		0,		0,
-	0,		0,		0,		0,		15,		0,
-	0,		0,		0,		0,		0,		15};   //观测噪声协方差阵
+	0.01,  	0,  	0,		0,		0,		0, 
+	0,  	0.01,  	0,		0,		0,		0,
+	0,  	0,  	0.01,	0,		0,		0,
+	0,		0,		0,		0.04,	0,		0,
+	0,		0,		0,		0,		0.04,	0,
+	0,		0,		0,		0,		0,		0.04};   //观测噪声协方差阵
 
 const float Q[16]={
-			0.00001,	0,			0,  		0,
-			0,			0.00001,	0,			0,
-			0,			0,			0.00001,	0,
-			0,    		0,      	0,  		0.00001};
+			0.000004,	0,			0,  		0,
+			0,			0.000004,	0,			0,
+			0,			0,			0.000004,	0,
+			0,    		0,      	0,  		0.000004};
 
 //噪声协方差阵自适应
 void SetR(SensorDataType *sdt,float *R,u8 measure_dim)
 {	
 	float totalAcc=sqrt(sdt->acc[0]*sdt->acc[0]+sdt->acc[1]*sdt->acc[1]+sdt->acc[2]*sdt->acc[2]);
-	float gErr=fabs(totalAcc-9.814);
+	float gErr=fabs(totalAcc-9.8015);
 	u8 i;
 	if(gErr<0.4)
 	{
 		for(i=0;i<3;i++)
-			R[i*(measure_dim+1)]=0.2*(1+4/0.4*gErr)+0.8*R[i*(measure_dim+1)];			
+			R[i*(measure_dim+1)]=0.2*(0.01+0.24/0.4*gErr)+0.8*R[i*(measure_dim+1)];			
 	}
 	else
 	{
 		for(i=0;i<3;i++)		
-			R[i*(measure_dim+1)]=0.2*(5+15/9.814*(gErr-0.4))+0.8*R[i*(measure_dim+1)];
+			R[i*(measure_dim+1)]=0.2*(0.25+0.75/9.8015*(gErr-0.4))+0.8*R[i*(measure_dim+1)];
 	}
 }
 
@@ -69,17 +68,14 @@ void vAEKFProcessTask(void* pvParameters)
 	float Cbn[9];
 
 	/*FIR filter*/
-	GFilterType sensorGFT[9]={
-	{{0},10,9},
-	{{0},10,9},
-	{{0},10,9},
+	GFilterType sensorGFT[6]={
 	{{0},10,9},
 	{{0},10,9},
 	{{0},10,9},
 	{{0},10,9},
 	{{0},10,9},
 	{{0},10,9}
-	};//gyr[0],gyr[1],gyr[2],acc[0],acc[1],acc[2],mag[0],mag[1],mag[2]
+	};//acc[0],acc[1],acc[2],mag[0],mag[1],mag[2]
 
 	/*kalman filter*/
 	float dt=0.005;
@@ -94,12 +90,11 @@ void vAEKFProcessTask(void* pvParameters)
 		xQueueReceive(xEKFQueue, &sdt, portMAX_DELAY);
 		for(k=0;k<3;k++)
 		{
-			sdt.gyr[k]=GaussianFilter(&(sensorGFT[k]),sdt.gyr[k]);
-			sdt.acc[k]=GaussianFilter(&(sensorGFT[k+3]),sdt.acc[k]);
-			sdt.mag[k]=(s16)(GaussianFilter(&(sensorGFT[k+6]),(float)(sdt.mag[k])));
+			sdt.acc[k]=GaussianFilter(&(sensorGFT[k]),sdt.acc[k]);
+			sdt.mag[k]=(s16)(GaussianFilter(&(sensorGFT[k+3]),(float)(sdt.mag[k])));
 		}
 		i++;
-		vTaskDelay((portTickType)40/portTICK_RATE_MS);
+		vTaskDelay((portTickType)20/portTICK_RATE_MS);
 	}
 	
 	/*initialize attitude*/
@@ -121,25 +116,25 @@ void vAEKFProcessTask(void* pvParameters)
 	filter=ekf_filter_new(4,6,Q,R,AHRS_GetA,AHRS_GetH,AHRS_aFunc,AHRS_hFunc);
 	memcpy(filter->x,bodyQuat,filter->state_dim*sizeof(float));
 	memcpy(filter->P,P,filter->state_dim*filter->state_dim*sizeof(float));
-	
+
+	lastTime = xTaskGetTickCount();	
 	for(;;)
 	{
 		xQueueReceive(xEKFQueue, &sdt, portMAX_DELAY);
 	
 		for(k=0;k<3;k++)
 		{
-			sdt.acc[k]=GaussianFilter(&(sensorGFT[k+3]),sdt.acc[k]);
-			sdt.mag[k]=(s16)(GaussianFilter(&(sensorGFT[k+6]),(float)(sdt.mag[k])));
+			sdt.acc[k]=GaussianFilter(&(sensorGFT[k]),sdt.acc[k]);
+			sdt.mag[k]=(s16)(GaussianFilter(&(sensorGFT[k+3]),(float)(sdt.mag[k])));
 		}
 			
 		EKF_predict(filter
 					,(void *)(sdt.gyr)
-					,(void *)NULL
 					,(void *)(&dt)
 					,(void *)(filter->A)
 					,(void *)NULL);
-					
-		if(i++>=10)
+								
+		if(i++>=20)
 		{
 			float norm;
 			i=0;			
@@ -168,8 +163,8 @@ void vAEKFProcessTask(void* pvParameters)
 					,measure
 					,(void *)(filter->x)
 					,(void *)m0
-					,(void *)(filter->x)
-					,(void *)m0);
+					,(void *)NULL
+					,(void *)NULL);
 
 			//calculate m0, method from paper
 			Quat2dcm(Cbn,filter->x);
@@ -180,11 +175,6 @@ void vAEKFProcessTask(void* pvParameters)
 			m0[1]=0.0;				
 		}		
 		QuatNormalize(filter->x);
-
-		for(k=0;k<3;k++)
-		{
-			sdt.gyr[k]=GaussianFilter(&(sensorGFT[k]),sdt.gyr[k]);
-		}
 		
 		att_data_ready = 0;
 		for(i=0; i<4; i++)
@@ -194,10 +184,11 @@ void vAEKFProcessTask(void* pvParameters)
 		for(i=0; i<3; i++)
 		{
 			att_cmt.data[i+4] = (s16)(sdt.gyr[i]*4000);
+			att_cmt.data[i+7] = (s16)(sdt.acc[i]*1000);
 		}
 		att_cmt.check = 0;
 		
-		for(i=0; i<7; i++)
+		for(i=0; i<10; i++)
 			att_cmt.check += att_cmt.data[i];
 		att_data_ready = 1;
 
@@ -210,18 +201,48 @@ void vAEKFProcessTask(void* pvParameters)
  * para2 null
  * para3 dt
  * */
-void AHRS_GetA(float *A,void *para1,void *para2,void *para3)
+void AHRS_GetA(float *A,void *para1,void *para2,void *para3, void *para4)
 {
 	float *w=(float *)para1;
-	float DT=*(float *)para3 * 0.5;
+	float DT=*(float *)para2 * 0.5;
+	
+	float w0xdt = w[0]*DT;
+	float w1xdt = w[1]*DT;
+	float w2xdt = w[2]*DT;
 
-	A[0]=1.0;		A[1]=-w[0]*DT;	A[2]=-w[1]*DT;	A[3]=-w[2]*DT;
-	A[4]=w[0]*DT;	A[5]=1.0;		A[6]=w[2]*DT;	A[7]=-w[1]*DT;
-	A[8]=w[1]*DT;	A[9]=-w[2]*DT;	A[10]=1.0;		A[11]=w[0]*DT;
-	A[12]=w[2]*DT;	A[13]=w[1]*DT;	A[14]=-w[0]*DT;	A[15]=1.0;
+	A[0]=1.0;		A[1]=-w0xdt;	A[2]=-w1xdt;	A[3]=-w2xdt;
+	A[4]=w0xdt;		A[5]=1.0;		A[6]=w2xdt;		A[7]=-w1xdt;
+	A[8]=w1xdt;		A[9]=-w2xdt;	A[10]=1.0;		A[11]=w0xdt;
+	A[12]=w2xdt;	A[13]=w1xdt;	A[14]=-w0xdt;	A[15]=1.0;
 }
 
-void AHRS_GetH(float *H,void *para1,void *para2)
+void AHRS_aFunc(float *q,void *para1,void *para2,void *para3, void *para4)
+{
+	float *A=(float *)para3;
+	
+	arm_matrix_instance_f32 newqMat,qMat,AMat;
+
+	newqMat.numRows=4;
+	newqMat.numCols=1;
+	newqMat.pData=pvPortMalloc(4*sizeof(float));
+
+	qMat.numRows=4;
+	qMat.numCols=1;
+	qMat.pData=q;
+
+	AMat.numRows=4;
+	AMat.numCols=4;
+	AMat.pData=A;
+
+	arm_mat_mult_f32(&AMat,&qMat,&newqMat);
+	q[0] = newqMat.pData[0];
+	q[1] = newqMat.pData[1];
+	q[2] = newqMat.pData[2];
+	q[3] = newqMat.pData[3];
+	vPortFree(newqMat.pData);
+}
+
+void AHRS_GetH(float *H,void *para1,void *para2,void *para3, void *para4)
 {
 	float *q=(float *)para1;
 	float *m0_=(float *)para2;
@@ -242,33 +263,7 @@ void AHRS_GetH(float *H,void *para1,void *para2)
 	H[20]=m0_[0]*q2[2]+m0_[2]*q2[0];   H[21]=m0_[0]*q2[3]-m0_[2]*q2[1];   H[22]=m0_[0]*q2[0]-m0_[2]*q2[2];  H[23]= m0_[0]*q2[1]+m0_[2]*q2[3];
 }
 
-/*
- * para1 matrix A
- * para2 NULL
- * */
-void AHRS_aFunc(float *q,void *para1,void *para2)
-{
-	float *A=(float *)para1;
-	arm_matrix_instance_f32 newqMat,qMat,AMat;
-
-	newqMat.numRows=4;
-	newqMat.numCols=1;
-	newqMat.pData=pvPortMalloc(4*sizeof(float));
-
-	qMat.numRows=4;
-	qMat.numCols=1;
-	qMat.pData=q;
-
-	AMat.numRows=4;
-	AMat.numCols=4;
-	AMat.pData=A;
-
-	arm_mat_mult_f32(&AMat,&qMat,&newqMat);
-	memcpy(q,newqMat.pData,4*sizeof(float));
-	vPortFree(newqMat.pData);
-}
-
-void AHRS_hFunc(float *hx,void *para1,void *para2)
+void AHRS_hFunc(float *hx,void *para1,void *para2,void *para3, void *para4)
 {
 	float *q = (float *)para1;
 	float *m0_ = (float *)para2;
@@ -323,11 +318,3 @@ void AHRS_hFunc(float *hx,void *para1,void *para2)
 	vPortFree(hx2Mat.pData);
 }
 
-void LoadAttData(u8 *buffer)
-{
-	if(att_data_ready == 1)
-	{
-		*(AttComType *)buffer = att_cmt;
-		att_data_ready = 0;
-	}
-}

@@ -19,7 +19,7 @@ xQueueHandle xAccCaliQueue;
 xQueueHandle baroQueue;
 xQueueHandle xEKFQueue;
 
-AccCaliType accCaliStructure;
+IMUCaliType accCaliStructure;
 
 ComType comt;
 BaroHeightType bht;
@@ -28,6 +28,7 @@ float Mean(float* sample,u16 N);
 float Var(float* sample,u16 N);
 
 void Gyro_Cali(float* gyro_offset);
+void AHRS_Read_IMU_Calid(float *gyr, float *acc, IMUCaliType *ict);
 
 __inline void AHRS_Read_IMU(float *gyr,float *acc)
 {
@@ -45,12 +46,6 @@ __inline void AHRS_Read_Mag(s16 *mag)
 
 void vAHRSConfig(void* pvParameters)
 {	
-	float acc[3]={0.0};
-	float gyr[3]={0.0};
-	float acczMean=0.0;
-	u8 i;
-
-	Blinks(LED2,3);
 	MS5607B_SPI_Init();
 	AD7689_SPI_Init();
 	vTaskDelay((portTickType)200/portTICK_RATE_MS);
@@ -58,15 +53,50 @@ void vAHRSConfig(void* pvParameters)
 	User_I2C_Config();
 	vTaskDelay((portTickType)200/portTICK_RATE_MS);
 
-	MAG_Config();
-	//read flash 15 float = 60 byte
-	xQueueReceive(xAccCaliQueue,&accCaliStructure,portMAX_DELAY);
-
-	//delay to wait stable condition
-	vTaskDelay((portTickType)3000/portTICK_RATE_MS);
-	
+	MAG_Config();	
 	User_I2C_IT_Config();
 
+	xTaskCreate(vAHRSCaliTask,(signed char *)"ahrs_cali"
+				,configMINIMAL_STACK_SIZE+1024
+				,(void *)(&accCaliStructure),mainFLASH_TASK_PRIORITY+3
+				,(xTaskHandle *)NULL);
+	vTaskDelete(NULL);	
+}
+
+void vAHRSCaliTask(void* pvParameters)
+{
+	float acc[3]={0.0};
+	float gyr[3]={0.0};
+	float acczMean=0.0;
+	
+	u8 i;
+	//read flash 15 float = 60 byte
+	xQueueReceive(xAccCaliQueue,&accCaliStructure,portMAX_DELAY);
+	switch(accCaliStructure.valid)
+	{
+		case 3://all calibrated
+			Blinks(LED2,1);
+			break;
+		case 2://only acc cali
+			Blinks(LED2,0);
+			accCaliStructure.gyr_scale[0] = 1.0;
+			accCaliStructure.gyr_scale[1] = 1.0;
+			accCaliStructure.gyr_scale[2] = 1.0;
+			
+			AHRSGyrCali(&accCaliStructure);
+			break;
+		default:
+			//should run calibration algorithm
+			Blinks(LED2,0);
+			accCaliStructure.gyr_scale[0] = 1.0;
+			accCaliStructure.gyr_scale[1] = 1.0;
+			accCaliStructure.gyr_scale[2] = 1.0;
+			
+			AHRSAccCali(&accCaliStructure);
+			AHRSGyrCali(&accCaliStructure);
+			break;
+	}
+	
 	//check acc
 	//if invert ..
 	//else read flash
@@ -79,34 +109,35 @@ void vAHRSConfig(void* pvParameters)
 		acczMean=acczMean+(acc[2]-acczMean)/i;
 		vTaskDelay((portTickType)10/portTICK_RATE_MS);
 	}
-	if(acczMean>7.5)//invert
+	
+	if(acczMean > 0.0)
 	{
-		xTaskCreate(vAHRSCali,(signed char *)"ahrs_cali"
-				,configMINIMAL_STACK_SIZE+1024
-				,(void *)(&accCaliStructure),mainFLASH_TASK_PRIORITY+2
-				,(xTaskHandle *)NULL);
+		Blinks(LED2, 0);
+		AHRSAccCali(&accCaliStructure);
 	}
-	else
-	{
-		xTaskCreate(vAHRSReadRaw
-				    ,(signed char *)"ahrs_read"
-						,configMINIMAL_STACK_SIZE+128
-						,NULL,mainFLASH_TASK_PRIORITY+3
-						,(xTaskHandle *)NULL);
-		xTaskCreate(vAHRSReadBaroHeight
+	
+	//check gyr
+
+	xQueueSend(xAccCaliQueue,&accCaliStructure,portMAX_DELAY);
+
+	xTaskCreate(vAHRSReadRaw
+		    ,(signed char *)"ahrs_read"
+				,configMINIMAL_STACK_SIZE+256
+				,NULL,mainFLASH_TASK_PRIORITY+3
+				,(xTaskHandle *)NULL);
+	xTaskCreate(vAHRSReadBaroHeight
 		            ,(signed char *)"baro"
 					,configMINIMAL_STACK_SIZE+128
 					,NULL
-					,mainFLASH_TASK_PRIORITY+2
+					,mainFLASH_TASK_PRIORITY+3
 					,(xTaskHandle *)NULL);
-	}
-	Blinks(LED2,1);
-	vTaskDelete(NULL);	
+	vTaskDelete(NULL);
 }
 
-void vAHRSCali(void* pvParameters)
+void AHRSAccCali(IMUCaliType *ict)
 {
-	AccCaliType act={{0}};
+	//----------------------------------------------------
+	float acc_cali_mat[12]={0.0};
 	float A[18]={0.0};
 	float U[24]={
 		 GRAVITY, -GRAVITY, 0.0, 	0.0, 	0.0, 	0.0
@@ -121,21 +152,12 @@ void vAHRSCali(void* pvParameters)
 	float buffer[100]={0.0};
 
 	arm_matrix_instance_f32 KMat,AMat,UMat;
+	arm_matrix_instance_f32 CoefMat;
+	
+	arm_matrix_instance_f32 invCoefMat;
 	arm_matrix_instance_f32 trUMat,UtrUMat,invUtrUMat,trUinvUtrUMat;
 
 	u8 i;
-
-	KMat.numRows = 3;
-	KMat.numCols = 4;
-	KMat.pData = act.K;
-
-	AMat.numRows = 3;
-	AMat.numCols = 6;
-	AMat.pData = A;
-
-	UMat.numRows = 4;
-	UMat.numCols = 6;
-	UMat.pData = U;
 
 	Blinks(LED1,3);//indicate calibration process begin
 	vTaskDelay((portTickType)5000/portTICK_RATE_MS);
@@ -298,6 +320,18 @@ void vAHRSCali(void* pvParameters)
 		vTaskDelay((portTickType)50/portTICK_RATE_MS);
 	}
 	Blinks(LED1,3);
+	
+	KMat.numRows = 3;
+	KMat.numCols = 4;
+	KMat.pData = acc_cali_mat;
+
+	AMat.numRows = 3;
+	AMat.numCols = 6;
+	AMat.pData = A;
+
+	UMat.numRows = 4;
+	UMat.numCols = 6;
+	UMat.pData = U;
 
 	trUMat.numRows = 6;
 	trUMat.numCols = 4;
@@ -330,22 +364,71 @@ void vAHRSCali(void* pvParameters)
 
 	arm_mat_mult_f32(&AMat, &trUinvUtrUMat, &KMat);
 	vPortFree(trUinvUtrUMat.pData);
+	
+	invCoefMat.numRows = 3;
+	invCoefMat.numCols = 3;
+	invCoefMat.pData = pvPortMalloc(36);
+	
+	invCoefMat.pData[0] = KMat.pData[0];	invCoefMat.pData[1] = KMat.pData[1];	invCoefMat.pData[2] = KMat.pData[2];
+	invCoefMat.pData[3] = KMat.pData[4];	invCoefMat.pData[4] = KMat.pData[5];	invCoefMat.pData[5] = KMat.pData[6];
+	invCoefMat.pData[6] = KMat.pData[8];	invCoefMat.pData[7] = KMat.pData[9];	invCoefMat.pData[8] = KMat.pData[10];
+	
+	CoefMat.numRows = 3;
+	CoefMat.numCols = 3;
+	CoefMat.pData = ict->acc_coef;
+	
+	arm_mat_inverse_f32(&invCoefMat, &CoefMat);
+	vPortFree(invCoefMat.pData);
 
-	*(AccCaliType *)pvParameters = act;
-	xQueueSend(xAccCaliQueue,&act,portMAX_DELAY);
+	ict->acc_bias[0] = KMat.pData[3];
+	ict->acc_bias[1] = KMat.pData[7];
+	ict->acc_bias[2] = KMat.pData[11];
+}
 
-	xTaskCreate(vAHRSReadRaw
-		    ,(signed char *)"ahrs_read"
-				,configMINIMAL_STACK_SIZE+128
-				,NULL,mainFLASH_TASK_PRIORITY+2
-				,(xTaskHandle *)NULL);
-	xTaskCreate(vAHRSReadBaroHeight
-		            ,(signed char *)"baro"
-					,configMINIMAL_STACK_SIZE+128
-					,NULL
-					,mainFLASH_TASK_PRIORITY+2
-					,(xTaskHandle *)NULL);
-	vTaskDelete(NULL);
+void AHRSGyrCali(IMUCaliType *ict)
+{
+	u16 i;
+	u8 j;
+	float rawData[3];
+	float acc[3];
+	float sum[3]={0.0};
+	for(i=0;i<500;i++)
+	{
+		AHRS_Read_IMU(rawData,acc);
+		for(j=0;j<3;j++)
+			sum[j]+=rawData[j];
+		vTaskDelay((portTickType)10/portTICK_RATE_MS);
+	}
+	for(j=0;j<3;j++)
+		ict->gyr_bias[j]=(sum[j]/500.0);
+		
+	ict->gyr_scale[0] = 1.0;
+	ict->gyr_scale[1] = 1.0;
+	ict->gyr_scale[2] = 1.0;
+	/*
+	x axis
+	
+	x_cali = 0;
+	while(! x_cali)
+	{
+		g_roll = 0;
+		read IMU and compute roll angle by acc, named a_roll_start;
+		for(i=0; i<125; i++)
+		{
+			delayUntil(2ms);
+			g_roll += x_rate*dt;
+			read IMU;
+			if y_rate > 0.1rad/s or z_rate > 0.1rad/s
+				break;
+		}
+		compute roll angle again, named a_roll_end;
+		if(i==124)
+		{
+			scale = (a_roll_end - a_roll_start)/g_roll;
+			x_cali = 1;
+		}	
+	}
+	*/
 }
 
 void vAHRSReadRaw(void* pvParameters)
@@ -355,11 +438,7 @@ void vAHRSReadRaw(void* pvParameters)
 	SensorDataType sdtTrashCan;
 	u8 CNT=0;
 
-	//补偿量
-	float K[9];
-	float bias_a[3];
-	arm_matrix_instance_f32 KMat,invKMat;
-	float gyro_offset[3]={0};
+	//raw data
 	u8 mag_raw[6];
 	float acc[3];
 	float gyr[3];
@@ -375,27 +454,6 @@ void vAHRSReadRaw(void* pvParameters)
 	portTickType xLastReadTime;
 
 	Blinks(LED1,2);
-	//初始化补偿系数
-	Gyro_Cali(gyro_offset);
-
-	K[0]=accCaliStructure.K[0];	K[1]=accCaliStructure.K[1];	K[2]=accCaliStructure.K[2];
-	K[3]=accCaliStructure.K[4]; K[4]=accCaliStructure.K[5]; K[5]=accCaliStructure.K[6];
-	K[6]=accCaliStructure.K[8]; K[7]=accCaliStructure.K[9]; K[8]=accCaliStructure.K[10];
-
-	bias_a[0]=accCaliStructure.K[3];	bias_a[1]=accCaliStructure.K[7];	bias_a[2]=accCaliStructure.K[11];
-
-	KMat.numRows = 3;
-	KMat.numCols = 3;
-	KMat.pData = K;
-
-	invKMat.numRows = 3;
-	invKMat.numCols = 3;
-	invKMat.pData = pvPortMalloc(36);
-
-	arm_mat_inverse_f32(&KMat, &invKMat);
-	memcpy(K, invKMat.pData, 36);
-
-	vPortFree(invKMat.pData);
 
 	//硬件配置
 	SPI_DMA_Config();
@@ -407,13 +465,19 @@ void vAHRSReadRaw(void* pvParameters)
 	{
 		AHRS_Read_IMU(gyr,acc);
 		
-		sdt.acc[0] = K[0]*(acc[0]-bias_a[0])+K[1]*(acc[1]-bias_a[1])+K[2]*(acc[2]-bias_a[2]);
-		sdt.acc[1] = K[3]*(acc[0]-bias_a[0])+K[4]*(acc[1]-bias_a[1])+K[5]*(acc[2]-bias_a[2]);
-		sdt.acc[2] = K[6]*(acc[0]-bias_a[0])+K[7]*(acc[1]-bias_a[1])+K[8]*(acc[2]-bias_a[2]);
+		sdt.acc[0] = accCaliStructure.acc_coef[0]*(acc[0]-accCaliStructure.acc_bias[0])
+					+ accCaliStructure.acc_coef[1]*(acc[1]-accCaliStructure.acc_bias[1])
+					+ accCaliStructure.acc_coef[2]*(acc[2]-accCaliStructure.acc_bias[2]);
+		sdt.acc[1] = accCaliStructure.acc_coef[3]*(acc[0]-accCaliStructure.acc_bias[0])
+					+ accCaliStructure.acc_coef[4]*(acc[1]-accCaliStructure.acc_bias[1])
+					+ accCaliStructure.acc_coef[5]*(acc[2]-accCaliStructure.acc_bias[2]);
+		sdt.acc[2] = accCaliStructure.acc_coef[6]*(acc[0]-accCaliStructure.acc_bias[0])
+					+ accCaliStructure.acc_coef[7]*(acc[1]-accCaliStructure.acc_bias[1])
+					+ accCaliStructure.acc_coef[8]*(acc[2]-accCaliStructure.acc_bias[2]);
 
-		sdt.gyr[0] = gyr[0]-gyro_offset[0];
-		sdt.gyr[1] = gyr[1]-gyro_offset[1];
-		sdt.gyr[2] = gyr[2]-gyro_offset[2];
+		sdt.gyr[0] = (gyr[0]-accCaliStructure.gyr_bias[0])*accCaliStructure.gyr_scale[0];
+		sdt.gyr[1] = (gyr[1]-accCaliStructure.gyr_bias[1])*accCaliStructure.gyr_scale[1];
+		sdt.gyr[2] = (gyr[2]-accCaliStructure.gyr_bias[2])*accCaliStructure.gyr_scale[2];
 
 		for(i=0;i<3;i++)
 		{
@@ -544,24 +608,6 @@ float Var(float* sample,u16 N)
 //	BMA180_InitStructure.mode=MODE_LOW_NOISE;
 //	BMA180_Init(&BMA180_InitStructure);
 //}
-
-void Gyro_Cali(float* gyro_offset)
-{
-	u16 i;
-	u8 j;
-	float rawData[3];
-	float acc[3];
-	float sum[3]={0.0};
-	for(i=0;i<500;i++)
-	{
-		AHRS_Read_IMU(rawData,acc);
-		for(j=0;j<3;j++)
-			sum[j]+=rawData[j];
-		vTaskDelay((portTickType)10/portTICK_RATE_MS);
-	}
-	for(j=0;j<3;j++)
-		gyro_offset[j]=(sum[j]/500.0);
-}
 
 void LoadRawData(u8 *buffer)
 {

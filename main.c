@@ -26,7 +26,7 @@ int main( void )
 
 	prvSetupHardware();
 	
-	xAccCaliQueue = xQueueCreate(1,sizeof(AccCaliType));
+	xAccCaliQueue = xQueueCreate(1,sizeof(IMUCaliType));
 	baroQueue = xQueueCreate(3,sizeof(float));
 	xEKFQueue = xQueueCreate(1,sizeof(SensorDataType));
 	EKFToComQueue = xQueueCreate(1,sizeof(AttComType));
@@ -63,12 +63,12 @@ int main( void )
 					,NULL
 					,mainFLASH_TASK_PRIORITY+3
 					,(xTaskHandle *)NULL);
-//		xTaskCreate(vAEKFProcessTask
-//		            ,(signed char *)"ahrs_ekf"
-//					,configMINIMAL_STACK_SIZE+128
-//					,NULL
-//					,mainFLASH_TASK_PRIORITY+2
-//					,(xTaskHandle *)NULL);
+		xTaskCreate(vAEKFProcessTask
+		            ,(signed char *)"ahrs_ekf"
+					,configMINIMAL_STACK_SIZE+512
+					,NULL
+					,mainFLASH_TASK_PRIORITY+2
+					,(xTaskHandle *)NULL);
 		
 		/* Start the scheduler. */
 		vTaskStartScheduler();
