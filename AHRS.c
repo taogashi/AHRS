@@ -91,7 +91,7 @@ void vAHRSCaliTask(void* pvParameters)
 			accCaliStructure.gyr_scale[0] = 1.0;
 			accCaliStructure.gyr_scale[1] = 1.0;
 			accCaliStructure.gyr_scale[2] = 1.0;
-			
+			accCaliStructure.valid = 0;
 			AHRSAccCali(&accCaliStructure);
 			AHRSGyrCali(&accCaliStructure);
 			break;
@@ -117,9 +117,11 @@ void vAHRSCaliTask(void* pvParameters)
 	}
 	
 	//check gyr
+	AHRSGyrCali(&accCaliStructure);
 
 	xQueueSend(xAccCaliQueue,&accCaliStructure,portMAX_DELAY);
 
+	Blinks(LED2, 1);
 	xTaskCreate(vAHRSReadRaw
 		    ,(signed char *)"ahrs_read"
 				,configMINIMAL_STACK_SIZE+256
@@ -319,7 +321,7 @@ void AHRSAccCali(IMUCaliType *ict)
 		A[17]=A[17]+(acc[2]-A[17])/i;
 		vTaskDelay((portTickType)50/portTICK_RATE_MS);
 	}
-	Blinks(LED1,3);
+	Blinks(LED1,1);
 	
 	KMat.numRows = 3;
 	KMat.numCols = 4;
@@ -383,6 +385,8 @@ void AHRSAccCali(IMUCaliType *ict)
 	ict->acc_bias[0] = KMat.pData[3];
 	ict->acc_bias[1] = KMat.pData[7];
 	ict->acc_bias[2] = KMat.pData[11];
+	
+	ict->valid |= 0x02;
 }
 
 void AHRSGyrCali(IMUCaliType *ict)
@@ -392,6 +396,8 @@ void AHRSGyrCali(IMUCaliType *ict)
 	float rawData[3];
 	float acc[3];
 	float sum[3]={0.0};
+
+	Blinks(LED1, 2);
 	for(i=0;i<500;i++)
 	{
 		AHRS_Read_IMU(rawData,acc);
@@ -399,12 +405,15 @@ void AHRSGyrCali(IMUCaliType *ict)
 			sum[j]+=rawData[j];
 		vTaskDelay((portTickType)10/portTICK_RATE_MS);
 	}
+	Blinks(LED1, 1);
 	for(j=0;j<3;j++)
 		ict->gyr_bias[j]=(sum[j]/500.0);
 		
 	ict->gyr_scale[0] = 1.0;
 	ict->gyr_scale[1] = 1.0;
 	ict->gyr_scale[2] = 1.0;
+	
+	ict->valid |= 0x01;
 	/*
 	x axis
 	
