@@ -4,6 +4,7 @@
 #include "kalman.h"
 #include "axisTrans.h"
 #include "AHRS.h"
+#include "spi.h"
 #include "filter.h"
 
 xQueueHandle EKFToComQueue;
@@ -78,7 +79,7 @@ void vAEKFProcessTask(void* pvParameters)
 	};//acc[0],acc[1],acc[2],mag[0],mag[1],mag[2]
 
 	/*kalman filter*/
-	float dt=0.005;
+	float dt=0.004;
 	ekf_filter filter;
 	float measure[6]={0};
 	
@@ -121,6 +122,26 @@ void vAEKFProcessTask(void* pvParameters)
 	for(;;)
 	{
 		xQueueReceive(xEKFQueue, &sdt, portMAX_DELAY);
+		
+		xQueueReceive(baroQueue, &att_cmt.height, 0);
+		
+		for(k=0; k<4; k++)
+		{
+			att_cmt.data[k] = (s16)(filter->x[k]*4000);
+		}
+		for(k=0; k<3; k++)
+		{
+			att_cmt.data[k+4] = (s16)(sdt.gyr[k]*4000);
+			att_cmt.data[k+7] = (s16)(sdt.acc[k]*1000);
+		}
+		att_cmt.check = 0;
+		
+		for(k=0; k<10; k++)
+			att_cmt.check += att_cmt.data[k];
+		
+		buffer_lock_global = 1;
+		LoadAttData(spi_mid_buffer);
+		buffer_lock_global = 0;
 	
 		for(k=0;k<3;k++)
 		{
@@ -175,24 +196,8 @@ void vAEKFProcessTask(void* pvParameters)
 			m0[1]=0.0;				
 		}		
 		QuatNormalize(filter->x);
-		
-		att_data_ready = 0;
-		for(i=0; i<4; i++)
-		{
-			att_cmt.data[i] = (s16)(filter->x[i]*4000);
-		}
-		for(i=0; i<3; i++)
-		{
-			att_cmt.data[i+4] = (s16)(sdt.gyr[i]*4000);
-			att_cmt.data[i+7] = (s16)(sdt.acc[i]*1000);
-		}
-		att_cmt.check = 0;
-		
-		for(i=0; i<10; i++)
-			att_cmt.check += att_cmt.data[i];
-		att_data_ready = 1;
 
-		vTaskDelayUntil(&lastTime,(portTickType)(5/portTICK_RATE_MS));
+		vTaskDelayUntil(&lastTime,(portTickType)(4/portTICK_RATE_MS));
 	}
 }
 
@@ -318,3 +323,7 @@ void AHRS_hFunc(float *hx,void *para1,void *para2,void *para3, void *para4)
 	vPortFree(hx2Mat.pData);
 }
 
+void LoadAttData(u8 *buffer)
+{
+	*(AttComType *)buffer = att_cmt;
+}

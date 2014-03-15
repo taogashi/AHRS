@@ -7,6 +7,7 @@
 typedef struct
 {
 	s16 data[10];
+	float height;
 	s32 check;
 }AttComType;
 

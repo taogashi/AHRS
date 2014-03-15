@@ -517,17 +517,17 @@ void vAHRSReadRaw(void* pvParameters)
 			MAG3110_Raw2Mag(mag_raw, sdt.mag);
 		}
 
-		xQueueReceive(baroQueue, &comt.height, 0);
-		for(i=0;i<3;i++) comt.data[i]=(s16)(sdt.gyr[i]*4000.0);
-		for(i=0;i<3;i++) comt.data[i+3]=(s16)(sdt.acc[i]*1000.0);
-		for(i=0;i<3;i++) comt.data[i+6]=sdt.mag[i];
-		comt.Check=0;
-		for(i=0;i<9;i++) 
-			comt.Check+=comt.data[i];
-		
-		buffer_lock_global = 1;
-		LoadRawData(spi_mid_buffer);
-		buffer_lock_global = 0;
+//		xQueueReceive(baroQueue, &comt.height, 0);
+//		for(i=0;i<3;i++) comt.data[i]=(s16)(sdt.gyr[i]*4000.0);
+//		for(i=0;i<3;i++) comt.data[i+3]=(s16)(sdt.acc[i]*1000.0);
+//		for(i=0;i<3;i++) comt.data[i+6]=sdt.mag[i];
+//		comt.Check=0;
+//		for(i=0;i<9;i++) 
+//			comt.Check+=comt.data[i];
+//		
+//		buffer_lock_global = 1;
+//		LoadRawData(spi_mid_buffer);
+//		buffer_lock_global = 0;
 			
 		xQueueReceive(xEKFQueue, &sdtTrashCan, 0);
 		xQueueSend(xEKFQueue, &sdt, 0);
