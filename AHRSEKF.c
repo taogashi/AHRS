@@ -12,10 +12,10 @@ xQueueHandle EKFToComQueue;
 volatile u8 att_data_ready=0;
 AttComType att_cmt;
 
-const float P[16]={0.000049,	0,	0, 0,
-					0,	0.000049,	0, 0,
-					0,	0,	0.000049, 0,
-					0,  0,  0, 0.000049};
+const float P[16]={1.0,	0,	0, 0,
+					0,	1.0,	0, 0,
+					0,	0,	1.0, 0,
+					0,  0,  0, 1.0};
 
 const float R[36]={
 	0.01,  	0,  	0,		0,		0,		0, 
@@ -135,7 +135,6 @@ void vAEKFProcessTask(void* pvParameters)
 			att_cmt.data[k+7] = (s16)(sdt.acc[k]*1000);
 		}
 		att_cmt.check = 0;
-		
 		for(k=0; k<10; k++)
 			att_cmt.check += att_cmt.data[k];
 		
@@ -155,7 +154,7 @@ void vAEKFProcessTask(void* pvParameters)
 					,(void *)(filter->A)
 					,(void *)NULL);
 								
-		if(i++>=20)
+		if(i++>=10)
 		{
 			float norm;
 			i=0;			

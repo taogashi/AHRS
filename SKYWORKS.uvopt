@@ -156,27 +156,17 @@
         <Ww>
           <count>1</count>
           <WinNumber>1</WinNumber>
-          <ItemText>sdt,0x0A</ItemText>
+          <ItemText>accCaliStructure</ItemText>
         </Ww>
         <Ww>
           <count>2</count>
           <WinNumber>1</WinNumber>
-          <ItemText>sensorGFT</ItemText>
+          <ItemText>filter-&gt;x[0]</ItemText>
         </Ww>
         <Ww>
           <count>3</count>
           <WinNumber>1</WinNumber>
-          <ItemText>accCaliStructure</ItemText>
-        </Ww>
-        <Ww>
-          <count>4</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>accCaliStructure</ItemText>
-        </Ww>
-        <Ww>
-          <count>5</count>
-          <WinNumber>1</WinNumber>
-          <ItemText>att_cmt,0x0A</ItemText>
+          <ItemText>angle</ItemText>
         </Ww>
       </WatchWindow1>
       <MemoryWindow1>
@@ -232,10 +222,10 @@
       <FileType>1</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>23</ColumnNumber>
+      <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>117</TopLine>
-      <CurrentLine>139</CurrentLine>
+      <TopLine>1</TopLine>
+      <CurrentLine>14</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\AHRSEKF.c</PathWithFileName>
       <FilenameWithoutPath>AHRSEKF.c</FilenameWithoutPath>
@@ -264,10 +254,10 @@
       <FileType>1</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>11</ColumnNumber>
+      <ColumnNumber>20</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>0</TopLine>
-      <CurrentLine>0</CurrentLine>
+      <TopLine>2</TopLine>
+      <CurrentLine>17</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\flashTask.c</PathWithFileName>
       <FilenameWithoutPath>flashTask.c</FilenameWithoutPath>
@@ -312,10 +302,10 @@
       <FileType>1</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>6</ColumnNumber>
+      <ColumnNumber>55</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>24</TopLine>
-      <CurrentLine>25</CurrentLine>
+      <TopLine>19</TopLine>
+      <CurrentLine>31</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\main.c</PathWithFileName>
       <FilenameWithoutPath>main.c</FilenameWithoutPath>
@@ -346,8 +336,8 @@
       <Focus>0</Focus>
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>563</TopLine>
-      <CurrentLine>582</CurrentLine>
+      <TopLine>411</TopLine>
+      <CurrentLine>393</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\AHRS.c</PathWithFileName>
       <FilenameWithoutPath>AHRS.c</FilenameWithoutPath>
@@ -578,7 +568,7 @@
       <Focus>0</Focus>
       <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>140</TopLine>
+      <TopLine>138</TopLine>
       <CurrentLine>145</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>..\StartUp\startup_stm32f10x_md.s</PathWithFileName>
@@ -648,10 +638,10 @@
       <FileType>1</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>19</ColumnNumber>
+      <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>0</TopLine>
-      <CurrentLine>0</CurrentLine>
+      <TopLine>2122</TopLine>
+      <CurrentLine>2147</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>..\Source\tasks.c</PathWithFileName>
       <FilenameWithoutPath>tasks.c</FilenameWithoutPath>
@@ -768,10 +758,10 @@
       <FileType>1</FileType>
       <tvExp>0</tvExp>
       <Focus>0</Focus>
-      <ColumnNumber>33</ColumnNumber>
+      <ColumnNumber>0</ColumnNumber>
       <tvExpOptDlg>0</tvExpOptDlg>
-      <TopLine>164</TopLine>
-      <CurrentLine>181</CurrentLine>
+      <TopLine>163</TopLine>
+      <CurrentLine>183</CurrentLine>
       <bDave2>0</bDave2>
       <PathWithFileName>.\mag3110.c</PathWithFileName>
       <FilenameWithoutPath>mag3110.c</FilenameWithoutPath>
