@@ -159,7 +159,7 @@ void AHRSAccCali(IMUCaliType *ict)
 	arm_matrix_instance_f32 invCoefMat;
 	arm_matrix_instance_f32 trUMat,UtrUMat,invUtrUMat,trUinvUtrUMat;
 
-	u8 i;
+	u16 i;
 
 	Blinks(LED1,3);//indicate calibration process begin
 	vTaskDelay((portTickType)5000/portTICK_RATE_MS);
@@ -188,13 +188,13 @@ void AHRSAccCali(IMUCaliType *ict)
 	Blinks(LED1,2);
 	A[0]=acc[0];	A[6]=acc[1];	A[12]=acc[2];
 
-	for(i=2;i<100;i++)
+	for(i=2;i<1000;i++)
 	{
 		AHRS_Read_IMU(gyro,acc);
 		A[0]=A[0]+(acc[0]-A[0])/i;
 		A[6]=A[6]+(acc[1]-A[6])/i;
 		A[12]=A[12]+(acc[2]-A[12])/i;
-		vTaskDelay((portTickType)50/portTICK_RATE_MS);
+		vTaskDelay((portTickType)5/portTICK_RATE_MS);
 	}
 	Blinks(LED1,3);
 
@@ -213,13 +213,13 @@ void AHRSAccCali(IMUCaliType *ict)
 	Blinks(LED1,2);
 	A[1]=acc[0];	A[7]=acc[1];	A[13]=acc[2];
 
-	for(i=2;i<100;i++)
+	for(i=2;i<1000;i++)
 	{
 		AHRS_Read_IMU(gyro,acc);
 		A[1]=A[1]+(acc[0]-A[1])/i;
 		A[7]=A[7]+(acc[1]-A[7])/i;
 		A[13]=A[13]+(acc[2]-A[13])/i;
-		vTaskDelay((portTickType)50/portTICK_RATE_MS);
+		vTaskDelay((portTickType)5/portTICK_RATE_MS);
 	}
 	Blinks(LED1,3);
 
@@ -238,13 +238,13 @@ void AHRSAccCali(IMUCaliType *ict)
 	Blinks(LED1,2);
 	A[2]=acc[0];	A[8]=acc[1];A[14]=acc[2];
 
-	for(i=2;i<100;i++)
+	for(i=2;i<1000;i++)
 	{
 		AHRS_Read_IMU(gyro,acc);
 		A[2]=A[2]+(acc[0]-A[2])/i;
 		A[8]=A[8]+(acc[1]-A[8])/i;
 		A[14]=A[14]+(acc[2]-A[14])/i;
-		vTaskDelay((portTickType)50/portTICK_RATE_MS);
+		vTaskDelay((portTickType)5/portTICK_RATE_MS);
 	}
 	Blinks(LED1,3);
 	
@@ -263,13 +263,13 @@ void AHRSAccCali(IMUCaliType *ict)
 	Blinks(LED1,2);
 	A[3]=acc[0];	A[9]=acc[1];	A[15]=acc[2];
 
-	for(i=2;i<100;i++)
+	for(i=2;i<1000;i++)
 	{
 		AHRS_Read_IMU(gyro,acc);
 		A[3]=A[3]+(acc[0]-A[3])/i;
 		A[9]=A[9]+(acc[1]-A[9])/i;
 		A[15]=A[15]+(acc[2]-A[15])/i;
-		vTaskDelay((portTickType)50/portTICK_RATE_MS);
+		vTaskDelay((portTickType)5/portTICK_RATE_MS);
 	}
 	Blinks(LED1,3);
 
@@ -288,13 +288,13 @@ void AHRSAccCali(IMUCaliType *ict)
 	Blinks(LED1,2);
 	A[4]=acc[0];	A[10]=acc[1];	A[16]=acc[2];
 
-	for(i=2;i<100;i++)
+	for(i=2;i<1000;i++)
 	{
 		AHRS_Read_IMU(gyro,acc);
 		A[4]=A[4]+(acc[0]-A[4])/i;
 		A[10]=A[10]+(acc[1]-A[10])/i;
 		A[16]=A[16]+(acc[2]-A[16])/i;
-		vTaskDelay((portTickType)50/portTICK_RATE_MS);
+		vTaskDelay((portTickType)5/portTICK_RATE_MS);
 	}
 	Blinks(LED1,3);
 
@@ -313,13 +313,13 @@ void AHRSAccCali(IMUCaliType *ict)
 	Blinks(LED1,2);
 	A[5]=acc[0];	A[11]=acc[1];A[17]=acc[2];
 
-	for(i=2;i<100;i++)
+	for(i=2;i<1000;i++)
 	{
 		AHRS_Read_IMU(gyro,acc);
 		A[5]=A[5]+(acc[0]-A[5])/i;
 		A[11]=A[11]+(acc[1]-A[11])/i;
 		A[17]=A[17]+(acc[2]-A[17])/i;
-		vTaskDelay((portTickType)50/portTICK_RATE_MS);
+		vTaskDelay((portTickType)5/portTICK_RATE_MS);
 	}
 	Blinks(LED1,1);
 	
