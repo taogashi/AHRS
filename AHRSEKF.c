@@ -83,7 +83,7 @@ void vAEKFProcessTask(void* pvParameters)
 	ekf_filter filter;
 	float measure[6]={0};
 	
-	portTickType lastTime;
+	portTickType lastTime, curTime;
 	
 	//initialize FIR filter
 	while(i<50)
@@ -123,6 +123,17 @@ void vAEKFProcessTask(void* pvParameters)
 	{
 		xQueueReceive(xEKFQueue, &sdt, portMAX_DELAY);
 		
+		/*compute time interval */
+		curTime = xTaskGetTickCount();
+		dt = curTime - lastTime;
+		lastTime = curTime;
+		
+		if(dt < 2.0)
+			dt = 0.002;
+		else
+			dt *= 0.001;
+		
+		/* package data */
 		xQueueReceive(baroQueue, &att_cmt.height, 0);
 		
 		for(k=0; k<4; k++)
@@ -142,6 +153,7 @@ void vAEKFProcessTask(void* pvParameters)
 		LoadAttData(spi_mid_buffer);
 		buffer_lock_global = 0;
 	
+		/* filter */
 		for(k=0;k<3;k++)
 		{
 			sdt.acc[k]=GaussianFilter(&(sensorGFT[k]),sdt.acc[k]);
@@ -195,8 +207,6 @@ void vAEKFProcessTask(void* pvParameters)
 			m0[1]=0.0;				
 		}		
 		QuatNormalize(filter->x);
-
-		vTaskDelayUntil(&lastTime,(portTickType)(4/portTICK_RATE_MS));
 	}
 }
 
