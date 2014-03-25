@@ -4,6 +4,8 @@
 #include "stm32f10x.h"
 #include "OSConfig.h"
 
+#define GRAVITY 9.8015
+
 extern xQueueHandle xAccCaliQueue;
 extern xQueueHandle baroQueue;
 extern xQueueHandle xEKFQueue;
@@ -26,25 +28,14 @@ typedef struct{
 	u8 check;
 }BaroHeightType;
 
-typedef struct{
-	float acc_coef[9];
-	float acc_bias[3];
-	float gyr_scale[3];
-	float gyr_bias[3];
-	uint8_t valid;
-}IMUCaliType;
+__inline void AHRS_Read_IMU(float *gyr,float *acc);
+__inline void AHRS_Read_Mag(s16 *mag);
 
 void vAHRSConfig(void* pvParameters);
 void vAHRSCaliTask(void* pvParameters);
 
-void AHRSAccCali(IMUCaliType *ict);
-void AHRSGyrCali(IMUCaliType *ict);
-
 void vAHRSReadRaw(void* pvParameters);
 void vAHRSReadBaroHeight(void* pvParameters);
-
-void LoadRawData(u8 *buffer);
-void LoadBaroData(u8 *buffer);
 
 
 #endif

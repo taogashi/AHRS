@@ -10,8 +10,7 @@
 #include "ledTask.h"
 #include "flashTask.h"
 #include "AHRSEKF.h"
-
-#include "I2Ctest.h"
+#include "calibration.h"
 
 /*
  * Configure the clocks, GPIO and other peripherals as required by the demo.
