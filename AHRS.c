@@ -61,7 +61,7 @@ void vAHRSCaliTask(void* pvParameters)
 			Blinks(LED2,0);
 			break;
 		case 2://only acc cali
-			Blinks(LED2,1);
+			Blinks(LED2,2);
 			//cali mag here
 			AHRSMagCali(&caliStructure);
 			break;

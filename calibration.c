@@ -2,7 +2,25 @@
 #include "ledTask.h"
 #include "AHRS.h"
 #include "statistic.h"
+#include "kalman.h"
+#include "mag3110.h"
+#include "I2C.h"
 #include <arm_math.h>
+
+/********************************/
+const float mP[36]={1.0,	0,	0, 0, 0, 0,
+					0,	1.0,	0, 0, 0, 0,
+					0,	0,	1.0, 0,0, 0,
+					0,  0,  0, 1.0, 0, 0,
+					0,  0,  0,  0,  1.0, 0,
+					0,  0,  0,  0,  0,  1.0};
+
+const float mR=100.0;   //????????
+
+const float caliQ[36]={0.0};
+
+void Cali_GetH(float *H,void *para1,void *para2,void *para3, void *para4);
+void Cali_hFunc(float *hx,void *para1,void *para2,void *para3, void *para4);
 
 void AHRSAccCali(IMUCaliType *ict)
 {
@@ -307,6 +325,103 @@ void AHRSGyrCali(IMUCaliType *ict)
 }
 
 void AHRSMagCali(IMUCaliType *ict)
+{	
+	u8 mag_raw[6];
+	s16 mag[3];
+	
+	float measure = 1.0;
+	
+	ekf_filter mag_estimator;
+	
+	float gama;
+	float radii[3];
+	
+	float geo_amp = 0.0;
+	float last_amp = 0.0;
+	float square_amp_err = 100.0;
+	float calid_mag[3];
+	
+	mag_estimator = ekf_filter_new(6, 1
+							, caliQ, &mR
+							, NULL, Cali_GetH
+							, NULL, Cali_hFunc);
+	memcpy(mag_estimator->P, mP, mag_estimator->state_dim*mag_estimator->state_dim*sizeof(float));
+	mag_estimator->x[0] = 0.0;
+	mag_estimator->x[1] = 0.0;
+	mag_estimator->x[2] = 0.0;
+	mag_estimator->x[3] = 0.0;
+	mag_estimator->x[4] = 0.0;
+	mag_estimator->x[5] = 0.0;				
+	
+	Blinks(LED1, 2);
+	for(;;)
+	{	
+		User_I2C_BufferRead(MAG3110_ADDR, mag_raw, MAG3110_OUT_X_MSB_REG, 6);
+		MAG3110_Raw2Mag(mag_raw, mag);
+		
+		EKF_update(mag_estimator
+					, &measure
+					, (void *)mag
+					, (void *)mag_estimator->H
+					, (void *)mag_estimator->x
+					, NULL);
+		ict->mag_bias[0] = -mag_estimator->x[3]/mag_estimator->x[0];
+		ict->mag_bias[1] = -mag_estimator->x[4]/mag_estimator->x[1];
+		ict->mag_bias[2] = -mag_estimator->x[5]/mag_estimator->x[2];
+		
+		gama = 1+(mag_estimator->x[3]*mag_estimator->x[3]/mag_estimator->x[0]
+					+mag_estimator->x[4]*mag_estimator->x[4]/mag_estimator->x[1]
+					+mag_estimator->x[5]*mag_estimator->x[5]/mag_estimator->x[2]);
+		arm_sqrt_f32(gama/mag_estimator->x[0], &radii[0]);
+		arm_sqrt_f32(gama/mag_estimator->x[1], &radii[1]);
+		arm_sqrt_f32(gama/mag_estimator->x[2], &radii[2]);
+		
+		calid_mag[0] = (mag[0] - ict->mag_bias[0])/radii[0];
+		calid_mag[1] = (mag[1] - ict->mag_bias[1])/radii[1];
+		calid_mag[2] = (mag[2] - ict->mag_bias[2])/radii[2];
+		
+		geo_amp = calid_mag[0]*calid_mag[0] + calid_mag[1]*calid_mag[1] + calid_mag[2]*calid_mag[2];
+		square_amp_err = 0.98*square_amp_err + 0.02*(geo_amp - last_amp)*(geo_amp - last_amp);
+		last_amp = geo_amp;
+		
+		if(square_amp_err < 0.000000000000001)
+		{
+			ict->mag_scale[0] = 500.0/radii[0];
+			ict->mag_scale[1] = 500.0/radii[1];
+			ict->mag_scale[2] = 500.0/radii[2];
+			
+			ict->valid |= 0x01;
+			
+			Blinks(LED1, 1);
+			return;
+		}
+		
+		vTaskDelay((portTickType)40/portTICK_RATE_MS);
+	}
+}
+
+void Cali_GetH(float *H,void *para1,void *para2,void *para3, void *para4)
 {
-	ict->valid |= 0x01;
+	float *data = (float *)para1;
+	H[0] = data[0]*data[0];
+	H[1] = data[1]*data[1];
+	H[2] = data[2]*data[2];
+	H[3] = 2*data[0];
+	H[4] = 2*data[1];
+	H[5] = 2*data[2];
+}
+
+void Cali_hFunc(float *hx,void *para1,void *para2,void *para3, void *para4)
+{
+	u8 i;
+	
+	float *H = (float *)para2;
+	float *x = (float *)para3;
+	
+	*hx = 0.0;
+	
+	for(i=0; i<6; i++)
+	{
+		*hx += x[i]*H[i];
+	}
 }

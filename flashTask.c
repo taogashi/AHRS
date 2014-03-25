@@ -8,9 +8,9 @@ void vFlashTask(void* pvParameters)
 {
 	portBASE_TYPE xstatus;
 	IMUCaliType act;
-	u32 buffer[20];
+	u32 buffer[30];
 	u8 i;
-	for(i=0;i<20;i++)
+	for(i=0;i<30;i++)
 	{
 		buffer[i]=*((u32 *)OperationFlashAddr+i);
 	}
@@ -38,7 +38,7 @@ void vFlashTask(void* pvParameters)
 		FLASHStatus=FLASH_ErasePage(OperationFlashAddr);
 		vTaskDelay((portTickType)5/portTICK_RATE_MS);
 		//Ð´Èë
-		for(i=0;i<20;i++)
+		for(i=0;i<30;i++)
 			FLASHStatus=FLASH_ProgramWord(OperationFlashAddr+i*sizeof(u32),buffer[i]);
 		//ÉÏËø
 		FLASH_Lock();
