@@ -52,6 +52,42 @@ void vAHRSCaliTask(void* pvParameters)
 	//read flash 15 float = 60 byte
 	xQueueReceive(xAccCaliQueue,&caliStructure,portMAX_DELAY);
 	
+		//check acc
+	//if invert ..
+	AHRS_Read_IMU(gyr,acc);
+	acczMean=acc[2];
+
+	for(i=2;i<20;i++)
+	{
+		AHRS_Read_IMU(gyr,acc);
+		acczMean=acczMean+(acc[2]-acczMean)/i;
+		vTaskDelay((portTickType)10/portTICK_RATE_MS);
+	}
+	
+	if(acczMean > 3.0)
+	{
+		Blinks(LED2, 1);
+		AHRSAccCali(&caliStructure);
+	}
+	
+	//check acc
+	//if flip ..
+	AHRS_Read_IMU(gyr,acc);
+	acczMean=acc[2]/acc[0];
+
+	for(i=2;i<20;i++)
+	{
+		AHRS_Read_IMU(gyr,acc);
+		acczMean=acczMean+(acc[2]/acc[0]-acczMean)/i;
+		vTaskDelay((portTickType)10/portTICK_RATE_MS);
+	}
+	
+	if(acczMean > -0.3 && acczMean < 0.3)
+	{
+		Blinks(LED2, 2);
+		AHRSMagCali(&caliStructure);
+	}
+	
 	vTaskDelay((portTickType)2000/portTICK_RATE_MS);
 	AHRSGyrCali(&caliStructure);
 	
@@ -75,42 +111,6 @@ void vAHRSCaliTask(void* pvParameters)
 			break;
 	}
 	
-	//check acc
-	//if invert ..
-	AHRS_Read_IMU(gyr,acc);
-	acczMean=acc[2];
-
-	for(i=2;i<20;i++)
-	{
-		AHRS_Read_IMU(gyr,acc);
-		acczMean=acczMean+(acc[2]-acczMean)/i;
-		vTaskDelay((portTickType)10/portTICK_RATE_MS);
-	}
-	
-	if(acczMean > 0.0)
-	{
-		Blinks(LED2, 1);
-		AHRSAccCali(&caliStructure);
-	}
-	
-	//check acc
-	//if flip ..
-	AHRS_Read_IMU(gyr,acc);
-	acczMean=acc[2];
-
-	for(i=2;i<20;i++)
-	{
-		AHRS_Read_IMU(gyr,acc);
-		acczMean=acczMean+(acc[2]-acczMean)/i;
-		vTaskDelay((portTickType)10/portTICK_RATE_MS);
-	}
-	
-	if(acczMean > -2.0 && acczMean < 2.0)
-	{
-		Blinks(LED2, 2);
-		AHRSMagCali(&caliStructure);
-	}
-
 	xQueueSend(xAccCaliQueue,&caliStructure,portMAX_DELAY);
 
 	Blinks(LED2, 0);
