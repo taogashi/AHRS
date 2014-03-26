@@ -52,7 +52,7 @@ void vAHRSCaliTask(void* pvParameters)
 	//read flash 15 float = 60 byte
 	xQueueReceive(xAccCaliQueue,&caliStructure,portMAX_DELAY);
 	
-		//check acc
+	//check acc
 	//if invert ..
 	AHRS_Read_IMU(gyr,acc);
 	acczMean=acc[2];
