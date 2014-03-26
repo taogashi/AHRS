@@ -6,8 +6,7 @@
 typedef struct{
 	float acc_coef[9];
 	float acc_bias[3];
-	float mag_scale[3];
-	float mag_bias[3];
+	float mag_ellipsolid_coef[6];
 	float gyr_scale[3];
 	float gyr_bias[3];
 	uint8_t valid;

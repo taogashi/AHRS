@@ -136,6 +136,7 @@ void vAHRSReadRaw(void* pvParameters)
 
 	//raw data
 	u8 mag_raw[6];
+	s16 mag_s16[3];
 	float acc[3];
 	float gyr[3];
 	
@@ -144,10 +145,29 @@ void vAHRSReadRaw(void* pvParameters)
 	u8 errCNT[3]={0};
 	
 	//其他
+	float gama;
+	float radii[3];
+	float mag_bias[3];
+	float mag_scale[3];
 
 //	u8 CNT=0;
 	u8 i;
 	portTickType xLastReadTime;
+	
+	mag_bias[0] = -caliStructure.mag_ellipsolid_coef[3]/caliStructure.mag_ellipsolid_coef[0];
+	mag_bias[1] = -caliStructure.mag_ellipsolid_coef[4]/caliStructure.mag_ellipsolid_coef[1];
+	mag_bias[2] = -caliStructure.mag_ellipsolid_coef[5]/caliStructure.mag_ellipsolid_coef[2];
+		
+	gama = 1+(caliStructure.mag_ellipsolid_coef[3]*caliStructure.mag_ellipsolid_coef[3]/caliStructure.mag_ellipsolid_coef[0]
+				+caliStructure.mag_ellipsolid_coef[4]*caliStructure.mag_ellipsolid_coef[4]/caliStructure.mag_ellipsolid_coef[1]
+				+caliStructure.mag_ellipsolid_coef[5]*caliStructure.mag_ellipsolid_coef[5]/caliStructure.mag_ellipsolid_coef[2]);
+	arm_sqrt_f32(gama/caliStructure.mag_ellipsolid_coef[0], &radii[0]);
+	arm_sqrt_f32(gama/caliStructure.mag_ellipsolid_coef[1], &radii[1]);
+	arm_sqrt_f32(gama/caliStructure.mag_ellipsolid_coef[2], &radii[2]);
+		
+	mag_scale[0] = 500.0/radii[0];
+	mag_scale[1] = 500.0/radii[1];
+	mag_scale[2] = 500.0/radii[2];
 
 	Blinks(LED1,2);
 
@@ -201,7 +221,10 @@ void vAHRSReadRaw(void* pvParameters)
 		{
 			CNT=0;
 			User_I2C_BufferRead(MAG3110_ADDR, mag_raw, MAG3110_OUT_X_MSB_REG, 6);
-			MAG3110_Raw2Mag(mag_raw, sdt.mag);
+			MAG3110_Raw2Mag(mag_raw, mag_s16);
+			sdt.mag[0] = (mag_s16[0] - mag_bias[0])*mag_scale[0];
+			sdt.mag[1] = (mag_s16[1] - mag_bias[1])*mag_scale[1];
+			sdt.mag[2] = (mag_s16[2] - mag_bias[2])*mag_scale[2];
 		}
 
 //		xQueueReceive(baroQueue, &comt.height, 0);

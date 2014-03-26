@@ -333,9 +333,6 @@ void AHRSMagCali(IMUCaliType *ict)
 	float mag_float[3];
 	
 	float measure = 1.0;
-	
-	float gama;
-	float radii[3];
 		
 	ekf_filter mag_estimator;
 	
@@ -344,12 +341,12 @@ void AHRSMagCali(IMUCaliType *ict)
 							, NULL, Cali_GetH
 							, NULL, Cali_hFunc);
 	memcpy(mag_estimator->P, mP, mag_estimator->state_dim*mag_estimator->state_dim*sizeof(float));
-	mag_estimator->x[0] = 0.0039;
-	mag_estimator->x[1] =  0.0037; 
-	mag_estimator->x[2] = 0.0034; 
-	mag_estimator->x[3] = 0.4406; 
-	mag_estimator->x[4] = -0.5855; 
-	mag_estimator->x[5] = -0.7596;
+	mag_estimator->x[0] = 0.0;
+	mag_estimator->x[1] = 0.0; 
+	mag_estimator->x[2] = 0.0; 
+	mag_estimator->x[3] = 0.0; 
+	mag_estimator->x[4] = 0.0; 
+	mag_estimator->x[5] = 0.0;
 
 	for(i=0;i<100;i++)
 	{
@@ -359,7 +356,7 @@ void AHRSMagCali(IMUCaliType *ict)
 	}
 	
 	Blinks(LED1, 2);
-	for(i=0; i<6400; i++)
+	for(i=0; i<1000; i++)
 	{	
 		User_I2C_BufferRead(MAG3110_ADDR, mag_raw, MAG3110_OUT_X_MSB_REG, 6);
 		MAG3110_Raw2Mag(mag_raw, mag);
@@ -374,23 +371,15 @@ void AHRSMagCali(IMUCaliType *ict)
 					, (void *)mag_estimator->x
 					, NULL);
 					
-		vTaskDelay((portTickType)15/portTICK_RATE_MS);
+		vTaskDelay((portTickType)30/portTICK_RATE_MS);
 	}
-	
-	ict->mag_bias[0] = -mag_estimator->x[3]/mag_estimator->x[0];
-	ict->mag_bias[1] = -mag_estimator->x[4]/mag_estimator->x[1];
-	ict->mag_bias[2] = -mag_estimator->x[5]/mag_estimator->x[2];
-		
-	gama = 1+(mag_estimator->x[3]*mag_estimator->x[3]/mag_estimator->x[0]
-				+mag_estimator->x[4]*mag_estimator->x[4]/mag_estimator->x[1]
-				+mag_estimator->x[5]*mag_estimator->x[5]/mag_estimator->x[2]);
-	arm_sqrt_f32(gama/mag_estimator->x[0], &radii[0]);
-	arm_sqrt_f32(gama/mag_estimator->x[1], &radii[1]);
-	arm_sqrt_f32(gama/mag_estimator->x[2], &radii[2]);
-		
-	ict->mag_scale[0] = 500.0/radii[0];
-	ict->mag_scale[1] = 500.0/radii[1];
-	ict->mag_scale[2] = 500.0/radii[2];
+
+	ict->mag_ellipsolid_coef[0] = mag_estimator->x[0];
+	ict->mag_ellipsolid_coef[1] = mag_estimator->x[1];
+	ict->mag_ellipsolid_coef[2] = mag_estimator->x[2];
+	ict->mag_ellipsolid_coef[3] = mag_estimator->x[3];
+	ict->mag_ellipsolid_coef[4] = mag_estimator->x[4];
+	ict->mag_ellipsolid_coef[5] = mag_estimator->x[5];
 	
 	ict->valid |= 0x01;
 	

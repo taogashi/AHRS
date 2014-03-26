@@ -214,11 +214,11 @@ void AD7689_Read_Gyro_Acc(float *gyr,float *acc)
 	u16 rawData[6];
 	AD7689_Read_All_Raw(rawData);
 	
-	acc[0] = 0.00041667*GRAVITY*(rawData[0]-26830);
-	acc[1] = -0.00041667*GRAVITY*(rawData[1]-26830);
-	acc[2] = -0.00041667*GRAVITY*(rawData[5]-26830);
+	acc[0] = 0.00041667*GRAVITY*(rawData[0]-27612);
+	acc[1] = -0.00041667*GRAVITY*(rawData[1]-27500);
+	acc[2] = -0.00041667*GRAVITY*(rawData[5]-27500);
 	
 	gyr[0] = 0.00022193345*(rawData[4] - 33090);
 	gyr[1] = 0.00022193345*(rawData[3] - 32480);
-	gyr[2] = 0.00022193345*(rawData[2] - 33600);
+	gyr[2] = 0.00022193345*(rawData[2] - 33600);	
 }
