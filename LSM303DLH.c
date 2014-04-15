@@ -719,9 +719,9 @@ void LSM303DLH_Raw2Mag(u8 *raw, s16 *mag)
 	
 	/* put your calibrating code here*/
 	/* for example: leave uncalibrated*/
-	//mag[0] = unCalibrated[0];
-	//mag[1] = unCalibrated[1];
-	//mag[2] = unCalibrated[2];
+	mag[0] = unCalibrated[0];
+	mag[1] = unCalibrated[1];
+	mag[2] = unCalibrated[2];
 	
 	/* for example: with center [-1, 95, 46], radii [1.26, 1.141, 1.352]*/
 	//	mag[0]=-raw_s16[1]+1;

@@ -134,7 +134,6 @@ void vAEKFProcessTask(void* pvParameters)
 			dt *= 0.001;
 		
 		/* package data */
-		xQueueReceive(baroQueue, &att_cmt.height, 0);
 		
 		for(k=0; k<4; k++)
 		{

@@ -26,8 +26,7 @@ int main( void )
 	prvSetupHardware();
 	
 	xAccCaliQueue = xQueueCreate(1,sizeof(IMUCaliType));
-	xEKFQueue = xQueueCreate(1,sizeof(SensorDataType));
-	EKFToComQueue = xQueueCreate(1,sizeof(AttComType));   
+	xEKFQueue = xQueueCreate(1,sizeof(SensorDataType)); 
 																	   	
 	xTaskCreate(vLED1Task
 				,(signed char *)"Led1 flash"

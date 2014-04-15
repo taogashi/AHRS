@@ -52,31 +52,31 @@ void AHRSAccCali(IMUCaliType *ict)
 	Blinks(LED1,2);//indicate collecting data
 	for(i=0;i<100;i++)
 	{
-		AHRS_Read_IMU(gyro,acc);
+		AHRS_Read_I2C_Gyr(gyro);
 		buffer[i]=gyro[0];
 		vTaskDelay((portTickType)20/portTICK_RATE_MS);
 	}
 	Blinks(LED1,3);
 	gyroVarStable = Var(buffer,100);
 
-	AHRS_Read_IMU(gyro,acc);
+	AHRS_Read_Default_Acc(acc);
 	while(acc[0]<7.8 || gyroVar>gyroVarStable)  //x axis upward
 	{
 		for(i=0;i<100;i++)
 		{
-			AHRS_Read_IMU(gyro,acc);
+			AHRS_Read_I2C_Gyr(gyro);
 			buffer[i]=gyro[0];
 			vTaskDelay((portTickType)20/portTICK_RATE_MS);
 		}
 		gyroVar=Var(buffer,100);
-		AHRS_Read_IMU(gyro,acc);
+		AHRS_Read_Default_Acc(acc);
 	}
 	Blinks(LED1,2);
 	A[0]=acc[0];	A[6]=acc[1];	A[12]=acc[2];
 
 	for(i=2;i<1000;i++)
 	{
-		AHRS_Read_IMU(gyro,acc);
+		AHRS_Read_Default_Acc(acc);
 		A[0]=A[0]+(acc[0]-A[0])/i;
 		A[6]=A[6]+(acc[1]-A[6])/i;
 		A[12]=A[12]+(acc[2]-A[12])/i;
@@ -84,24 +84,24 @@ void AHRSAccCali(IMUCaliType *ict)
 	}
 	Blinks(LED1,3);
 
-	AHRS_Read_IMU(gyro,acc);
+	AHRS_Read_Default_Acc(acc);
 	while(acc[0]>-7.8 || gyroVar>gyroVarStable)  //x axis downward
 	{
 		for(i=0;i<100;i++)
 		{
-			AHRS_Read_IMU(gyro,acc);
+			AHRS_Read_I2C_Gyr(gyro);
 			buffer[i]=gyro[0];
 			vTaskDelay((portTickType)20/portTICK_RATE_MS);
 		}
 		gyroVar=Var(buffer,100);
-		AHRS_Read_IMU(gyro,acc);
+		AHRS_Read_Default_Acc(acc);
 	}
 	Blinks(LED1,2);
 	A[1]=acc[0];	A[7]=acc[1];	A[13]=acc[2];
 
 	for(i=2;i<1000;i++)
 	{
-		AHRS_Read_IMU(gyro,acc);
+		AHRS_Read_Default_Acc(acc);
 		A[1]=A[1]+(acc[0]-A[1])/i;
 		A[7]=A[7]+(acc[1]-A[7])/i;
 		A[13]=A[13]+(acc[2]-A[13])/i;
@@ -109,24 +109,24 @@ void AHRSAccCali(IMUCaliType *ict)
 	}
 	Blinks(LED1,3);
 
-	AHRS_Read_IMU(gyro,acc);
+	AHRS_Read_Default_Acc(acc);
 	while(acc[1]<7.8 || gyroVar>gyroVarStable)  //y axis upward
 	{
 		for(i=0;i<100;i++)
 		{
-			AHRS_Read_IMU(gyro,acc);
+			AHRS_Read_I2C_Gyr(gyro);
 			buffer[i]=gyro[0];
 			vTaskDelay((portTickType)20/portTICK_RATE_MS);
 		}
 		gyroVar=Var(buffer,100);
-		AHRS_Read_IMU(gyro,acc);
+		AHRS_Read_Default_Acc(acc);
 	}
 	Blinks(LED1,2);
 	A[2]=acc[0];	A[8]=acc[1];A[14]=acc[2];
 
 	for(i=2;i<1000;i++)
 	{
-		AHRS_Read_IMU(gyro,acc);
+		AHRS_Read_Default_Acc(acc);
 		A[2]=A[2]+(acc[0]-A[2])/i;
 		A[8]=A[8]+(acc[1]-A[8])/i;
 		A[14]=A[14]+(acc[2]-A[14])/i;
@@ -134,24 +134,24 @@ void AHRSAccCali(IMUCaliType *ict)
 	}
 	Blinks(LED1,3);
 	
-	AHRS_Read_IMU(gyro,acc);
+	AHRS_Read_Default_Acc(acc);
 	while(acc[1]>-7.8 || gyroVar>gyroVarStable)  //y axis downward
 	{
 		for(i=0;i<100;i++)
 		{
-			AHRS_Read_IMU(gyro,acc);
+			AHRS_Read_I2C_Gyr(gyro);
 			buffer[i]=gyro[0];
 			vTaskDelay((portTickType)20/portTICK_RATE_MS);
 		}
 		gyroVar=Var(buffer,100);
-		AHRS_Read_IMU(gyro,acc);
+		AHRS_Read_Default_Acc(acc);
 	}
 	Blinks(LED1,2);
 	A[3]=acc[0];	A[9]=acc[1];	A[15]=acc[2];
 
 	for(i=2;i<1000;i++)
 	{
-		AHRS_Read_IMU(gyro,acc);
+		AHRS_Read_Default_Acc(acc);
 		A[3]=A[3]+(acc[0]-A[3])/i;
 		A[9]=A[9]+(acc[1]-A[9])/i;
 		A[15]=A[15]+(acc[2]-A[15])/i;
@@ -159,24 +159,24 @@ void AHRSAccCali(IMUCaliType *ict)
 	}
 	Blinks(LED1,3);
 
-	AHRS_Read_IMU(gyro,acc);
+	AHRS_Read_Default_Acc(acc);
 	while(acc[2]<7.8 || gyroVar>gyroVarStable)  //z axis upward
 	{
 		for(i=0;i<100;i++)
 		{
-			AHRS_Read_IMU(gyro,acc);
+			AHRS_Read_I2C_Gyr(gyro);
 			buffer[i]=gyro[0];
 			vTaskDelay((portTickType)20/portTICK_RATE_MS);
 		}
 		gyroVar=Var(buffer,100);
-		AHRS_Read_IMU(gyro,acc);
+		AHRS_Read_Default_Acc(acc);
 	}
 	Blinks(LED1,2);
 	A[4]=acc[0];	A[10]=acc[1];	A[16]=acc[2];
 
 	for(i=2;i<1000;i++)
 	{
-		AHRS_Read_IMU(gyro,acc);
+		AHRS_Read_Default_Acc(acc);
 		A[4]=A[4]+(acc[0]-A[4])/i;
 		A[10]=A[10]+(acc[1]-A[10])/i;
 		A[16]=A[16]+(acc[2]-A[16])/i;
@@ -184,24 +184,24 @@ void AHRSAccCali(IMUCaliType *ict)
 	}
 	Blinks(LED1,3);
 
-	AHRS_Read_IMU(gyro,acc);
+	AHRS_Read_Default_Acc(acc);
 	while(acc[2]>-7.8 || gyroVar>gyroVarStable)  //z axis downward
 	{
 		for(i=0;i<100;i++)
 		{
-			AHRS_Read_IMU(gyro,acc);
+			AHRS_Read_I2C_Gyr(gyro);
 			buffer[i]=gyro[0];
 			vTaskDelay((portTickType)20/portTICK_RATE_MS);
 		}
 		gyroVar=Var(buffer,100);
-		AHRS_Read_IMU(gyro,acc);
+		AHRS_Read_Default_Acc(acc);
 	}
 	Blinks(LED1,2);
 	A[5]=acc[0];	A[11]=acc[1];A[17]=acc[2];
 
 	for(i=2;i<1000;i++)
 	{
-		AHRS_Read_IMU(gyro,acc);
+		AHRS_Read_Default_Acc(acc);
 		A[5]=A[5]+(acc[0]-A[5])/i;
 		A[11]=A[11]+(acc[1]-A[11])/i;
 		A[17]=A[17]+(acc[2]-A[17])/i;
@@ -280,13 +280,12 @@ void AHRSGyrCali(IMUCaliType *ict)
 	u16 i;
 	u8 j;
 	float rawData[3];
-	float acc[3];
 	float sum[3]={0.0};
 
 	Blinks(LED1, 2);
 	for(i=0;i<500;i++)
 	{
-		AHRS_Read_IMU(rawData,acc);
+		AHRS_Read_I2C_Gyr(rawData);
 		for(j=0;j<3;j++)
 			sum[j]+=rawData[j];
 		vTaskDelay((portTickType)5/portTICK_RATE_MS);
@@ -327,8 +326,7 @@ void AHRSGyrCali(IMUCaliType *ict)
 void AHRSMagCali(IMUCaliType *ict)
 {	
 	u16 i;
-	
-	u8 mag_raw[6];
+
 	s16 mag[3];
 	float mag_float[3];
 	
@@ -350,16 +348,14 @@ void AHRSMagCali(IMUCaliType *ict)
 
 	for(i=0;i<100;i++)
 	{
-		User_I2C_BufferRead(MAG3110_ADDR, mag_raw, MAG3110_OUT_X_MSB_REG, 6);
-		MAG3110_Raw2Mag(mag_raw, mag);
+		AHRS_Read_I2C_Mag(mag);
 		vTaskDelay((portTickType)40/portTICK_RATE_MS);
 	}
 	
 	Blinks(LED1, 2);
 	for(i=0; i<1000; i++)
 	{	
-		User_I2C_BufferRead(MAG3110_ADDR, mag_raw, MAG3110_OUT_X_MSB_REG, 6);
-		MAG3110_Raw2Mag(mag_raw, mag);
+		AHRS_Read_I2C_Mag(mag);
 		mag_float[0] = mag[0];
 		mag_float[1] = mag[1];
 		mag_float[2] = mag[2];

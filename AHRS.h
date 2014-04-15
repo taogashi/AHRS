@@ -5,6 +5,7 @@
 #include "OSConfig.h"
 
 #define GRAVITY 9.8015
+#define AHRS_Read_Default_Acc AHRS_Read_SPI_Acc
 
 extern xQueueHandle xAccCaliQueue;
 extern xQueueHandle xEKFQueue;
@@ -18,23 +19,17 @@ typedef struct
 
 typedef struct{
 	s16 data[9];//gyr[3],acc[3],mag[3]
-	float height;
 	s32 Check;//Check=sum(*(u8 *)data)
 }ComType;
 
-typedef struct{
-	s16 baroheight;
-	u8 check;
-}BaroHeightType;
-
-__inline void AHRS_Read_IMU(float *gyr,float *acc);
-__inline void AHRS_Read_Mag(s16 *mag);
+void AHRS_Read_I2C_Acc(float *acc);
+void AHRS_Read_I2C_Mag(s16 *mag);
+void AHRS_Read_I2C_Gyr(float *gyr);
+void AHRS_Read_SPI_Acc(float *gyr);
 
 void vAHRSConfig(void* pvParameters);
 void vAHRSCaliTask(void* pvParameters);
 
 void vAHRSReadRaw(void* pvParameters);
-void vAHRSReadBaroHeight(void* pvParameters);
-
 
 #endif
