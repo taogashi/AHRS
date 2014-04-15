@@ -10,10 +10,9 @@
 
 #include "HAL_I2C.h"
 #include "I2C.h"
-
 #include "ledTask.h"
 
-#define GRAVITY 9.8015
+
 
 u8 sensor_raw[18];
 
@@ -23,11 +22,6 @@ xQueueHandle xEKFQueue;
 AccCaliType accCaliStructure;
 
 ComType comt;
-BaroHeightType bht;
-
-float Mean(float* sample,u16 N);
-float Var(float* sample,u16 N);
-void Gyro_Cali(float* gyro_offset);
 
 __inline void AHRS_Read_SPI_Acc(float *acc)
 {

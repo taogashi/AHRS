@@ -31,3 +31,5 @@
 *.lnp
 *.sct
 *.iex
+
+JLinkLog.txt

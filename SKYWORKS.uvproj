@@ -44,7 +44,7 @@
             <NotGenerated>0</NotGenerated>
             <InvalidFlash>1</InvalidFlash>
           </TargetStatus>
-          <OutputDirectory>..\Object\</OutputDirectory>
+          <OutputDirectory>.\</OutputDirectory>
           <OutputName>SKYWORKS</OutputName>
           <CreateExecutable>1</CreateExecutable>
           <CreateLib>0</CreateLib>
@@ -424,24 +424,9 @@
               <FilePath>.\AHRSEKF.c</FilePath>
             </File>
             <File>
-              <FileName>axisTrans.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\axisTrans.c</FilePath>
-            </File>
-            <File>
-              <FileName>filter.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\filter.c</FilePath>
-            </File>
-            <File>
               <FileName>flashTask.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\flashTask.c</FilePath>
-            </File>
-            <File>
-              <FileName>kalman.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\kalman.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -637,6 +622,36 @@
               <FileName>arm_sin_f32.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\DSP_lib\arm_sin_f32.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>algorithm</GroupName>
+          <Files>
+            <File>
+              <FileName>axisTrans.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\axisTrans.c</FilePath>
+            </File>
+            <File>
+              <FileName>filter.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\filter.c</FilePath>
+            </File>
+            <File>
+              <FileName>kalman.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\kalman.c</FilePath>
+            </File>
+            <File>
+              <FileName>calibration.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\calibration.c</FilePath>
+            </File>
+            <File>
+              <FileName>statistic.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\statistic.c</FilePath>
             </File>
           </Files>
         </Group>

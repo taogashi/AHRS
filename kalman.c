@@ -89,14 +89,14 @@ void ekf_filter_delete(ekf_filter filter)
 filter: EKF filter structure
 para1~5: option parameter
 */
-void EKF_predict(ekf_filter filter,void *para1,void *para2,void *para3,void *para4,void *para5)
+void EKF_predict(ekf_filter filter,void *para1,void *para2,void *para3,void *para4)
 {
 	arm_matrix_instance_f32 AMat,PMat,QMat,APMat,trAMat,APtrAMat;
 
 	size_t ss_size=filter->state_dim*filter->state_dim*sizeof(float);
 
-	filter->GetA(filter->A,para1,para2,para3);
-	filter->aFunc(filter->x,para4,para5);
+	filter->GetA(filter->A,para1,para2,para3,para4);
+	filter->aFunc(filter->x,para1,para2,para3,para4);
 
 	AMat.numRows=filter->state_dim;
 	AMat.numCols=filter->state_dim;
@@ -150,7 +150,7 @@ void EKF_update(ekf_filter filter,float *measure,void *para1,void *para2, void *
 	size_t sm_size=filter->state_dim*filter->measure_dim*sizeof(float);
 	size_t mm_size=filter->measure_dim*filter->measure_dim*sizeof(float);
 
-	filter->GetH(filter->H,para1,para2);
+	filter->GetH(filter->H,para1,para2,para3,para4);
 //	printMat(filter->H,filter->measure_dim,filter->state_dim);
 
 	PMat.numRows=filter->state_dim;
@@ -217,7 +217,7 @@ void EKF_update(ekf_filter filter,float *measure,void *para1,void *para2, void *
 	hxMat.numCols=1;
 	hxMat.pData=pvPortMalloc(m_size);
 
-	filter->hFunc(hxMat.pData,para3,para4);
+	filter->hFunc(hxMat.pData,para1,para2,para3,para4);
 //	printMat(pvParameters1,1,filter->measure_dim);
 //	printMat(hxMat.pData,1,filter->measure_dim);
 

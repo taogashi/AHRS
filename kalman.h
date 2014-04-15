@@ -3,10 +3,10 @@
 
 #include "stm32f10x.h"
 
-typedef void (*timeUpdateFunc)(float*,void*,void*);
-typedef void (*EstiMeasureFunc)(float*,void*,void*);
-typedef void (*getA_function)(float*,void*,void*,void*);
-typedef void (*getH_function)(float*,void*,void*);
+typedef void (*timeUpdateFunc)(float*,void*,void*,void*,void*);
+typedef void (*EstiMeasureFunc)(float*,void*,void*,void*,void*);
+typedef void (*getA_function)(float*,void*,void*,void*,void*);
+typedef void (*getH_function)(float*,void*,void*,void*,void*);
 
 typedef struct
 {
@@ -40,7 +40,7 @@ ekf_filter ekf_filter_new(u8 state_dim,
  * delete a ekf filter
  */
 void ekf_filter_delete(ekf_filter filter);
-void EKF_predict(ekf_filter filter,void *para1,void *para2,void *para3,void *para4,void *para5);
+void EKF_predict(ekf_filter filter,void *para1,void *para2,void *para3,void *para4);
 void EKF_update(ekf_filter filter,float *measure, void *para1,void *para2, void *para3, void *para4);
 
 #endif
