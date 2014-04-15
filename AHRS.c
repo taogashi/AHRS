@@ -244,7 +244,7 @@ void vAHRSReadRaw(void* pvParameters)
 
 		xQueueSend(xEKFQueue, &sdt, 0);
 
-		vTaskDelayUntil(&xLastReadTime,(portTickType)2/portTICK_RATE_MS);
+		vTaskDelayUntil(&xLastReadTime,(portTickType)5/portTICK_RATE_MS);
 	}
 }
 

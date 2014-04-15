@@ -128,8 +128,8 @@ void vAEKFProcessTask(void* pvParameters)
 		dt = curTime - lastTime;
 		lastTime = curTime;
 		
-		if(dt < 2.0)
-			dt = 0.002;
+		if(dt < 5.0)
+			dt = 0.005;
 		else
 			dt *= 0.001;
 		
