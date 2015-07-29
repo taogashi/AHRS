@@ -71,69 +71,35 @@ end
 
 q=myA2Q([roll,pitch,yaw]);
 
-%%
-x = [q,0,0,0]; % q, bias of gyro
+x = [q, 0, 0, 0];
+
+w_k_1 = data(1,1:3)/57.3;
 
 %init recorder
 angleRecorder=zeros(size(acc,1),3);
 quatRecorder=zeros(size(acc,1),4);
 biasRecorder = zeros(size(acc,1),3);
-%set parameter
-g=-9.75;
-P=eye(7,7);
-Q=0.0012*eye(3);
-% R=0.1*eye(6,6);
-% Q=diag([0.0001,0.0001,0.0001,0.0001]);
-R=diag([4 4 4 400 400 400]);
 
-for n=1:size(acc,1)
+for n = 1:size(acc,1)
+    % record
     [angleRecorder(n,3),angleRecorder(n,2),angleRecorder(n,1)]=quat2angle(x(1:4));
     quatRecorder(n,:)=x(1:4);
     biasRecorder(n,:) = x(5:7);
+    
+    % predict
+    x = INS_update(x, [(gyrRate(n,:)-x(5:7)+w_k_1)/2,dT(n)]); 
     A=GetA(x, gyrRate(n,:),dT(n));
     G=GetG(x, dT(n));
-    H=GetH(x,MagReal,g);
-%     q=(A*q')';%1*4
-    x = INS_update(x, [gyrRate(n,:)-x(5:7),dT(n)]);
     P=A*P*A' + G*Q*G';
+    
+    % update
+    H=GetH(x,MagReal,g);
     K = P*H'/(H*P*H'+R);
     obState=[acc(n,:),mag(n,:)];%1*6
     Cnb=Quat2Cnb(x(1:4));
     Hq=[Cnb*[0;0;g];Cnb*MagReal'];%6*1
-    x=x+(K*(obState'-Hq))';
+    x = x+(K*(obState'-Hq))';
+    w_k_1 = gyrRate(n,:) - x(5:7);
     P=(eye(7)-K*H)*P;
     x(1:4)=x(1:4)/sqrt(x(1:4)*x(1:4)');
 end
-
-index=find(angleRecorder(:,3)<0);
-angleRecorder(index,3)=angleRecorder(index,3)+2*pi;
-
-figure(1);
-subplot(2,1,1);
-hold off;
-plot(quatRecorder(:,1));
-hold on;
-plot(quatRecorder(:,2),'r');
-plot(quatRecorder(:,3),'g');
-plot(quatRecorder(:,4),'k');
-subplot(2,1,2);
-hold off;
-plot(biasRecorder(:,1));
-hold on;
-plot(biasRecorder(:,2),'r');
-plot(biasRecorder(:,3),'g');
-
-figure(2);hold off;
-subplot(2,1,1);hold off;
-plot(angleRecorder(:,1)*57.3);
-grid on;
-hold on;
-plot(angleRecorder(:,2)*57.3,'r');
-plot(angleRecorder(:,3)*57.3,'g');
-
-subplot(2,1,2);hold off;
-plot(acc(:,1));
-hold on;
-grid on;
-plot(acc(:,2),'r');
-plot(acc(:,3),'g');
