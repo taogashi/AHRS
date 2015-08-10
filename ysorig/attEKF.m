@@ -115,9 +115,9 @@ hold on;
 plot(angleRecorder(:,2)*57.3,'r');
 plot(angleRecorder(:,3)*57.3,'g');
 
-subplot(2,1,2);hold off;
-plot(acc(:,1));
-hold on;
-grid on;
-plot(acc(:,2),'r');
-plot(acc(:,3),'g');
+% subplot(2,1,2);hold off;
+% plot(acc(:,1));
+% hold on;
+% grid on;
+% plot(acc(:,2),'r');
+% plot(acc(:,3),'g');

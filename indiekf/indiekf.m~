@@ -76,7 +76,7 @@ q = cnb2quat(cnb);
 
 % we always use column vector except library function
 x = [q; 0; 0; 0];
-P = diag([0.02 0.02 0.02 0.02 0.02 0.02]);
+P = diag([0.02 0.02 0.02 0.02 0.02 0.02 0.02]);
 sigr = 0.01;
 sigw = 0.002;
 
@@ -121,9 +121,9 @@ for n = 1:size(acc,1)
     
     
     % update
-%     H = [skew(quat2cnb(x(1:4))*[0 0 -9.76]') zeros(3,3);
-%         skew(quat2cnb(x(1:4))*MagReal') zeros(3,3)];
-%     K = P*H'/(H*P*H' + sig
+    H = [skew(quat2cnb(x(1:4))*[0 0 -9.76]') zeros(3,3);
+        skew(quat2cnb(x(1:4))*MagReal') zeros(3,3)];
+    K = P*H'/(H*P*H' + sig
 %     H=GetH(x,MagReal,g);
 %     K = P*H'/(H*P*H'+R);
 %     obState=[acc(n,:),mag(n,:)];%1*6

@@ -82,24 +82,27 @@ biasRecorder = zeros(size(acc,1),3);
 g=-9.75;
 P=eye(7,7);
 Q=0.0012*eye(3);
-% R=0.1*eye(6,6);
-% Q=diag([0.0001,0.0001,0.0001,0.0001]);
-R=diag([4 4 4 400 400 400]);
+% R=diag([4 4 4 400 400 400]);
+R = diag([4 4 4]);
 
 for n=1:size(acc,1)
     [angleRecorder(n,3),angleRecorder(n,2),angleRecorder(n,1)]=quat2angle(x(1:4));
     quatRecorder(n,:)=x(1:4);
     biasRecorder(n,:) = x(5:7);
+    
     A=GetA(x, gyrRate(n,:),dT(n));
     G=GetG(x, dT(n));
-    H=GetH(x,MagReal,g);
-%     q=(A*q')';%1*4
     x = INS_update(x, [gyrRate(n,:)-x(5:7),dT(n)]);
     P=A*P*A' + G*Q*G';
+    
+    H=GetH(x,MagReal,g);
     K = P*H'/(H*P*H'+R);
-    obState=[acc(n,:),mag(n,:)];%1*6
+%     obState=[acc(n,:),mag(n,:)];%1*6
+    obState = [acc(n,:)];
+    
     Cnb=Quat2Cnb(x(1:4));
-    Hq=[Cnb*[0;0;g];Cnb*MagReal'];%6*1
+%     Hq=[Cnb*[0;0;g];Cnb*MagReal'];%6*1
+    Hq = Cnb*[0;0;g];
     x=x+(K*(obState'-Hq))';
     P=(eye(7)-K*H)*P;
     x(1:4)=x(1:4)/sqrt(x(1:4)*x(1:4)');
