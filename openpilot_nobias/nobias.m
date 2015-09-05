@@ -1,3 +1,4 @@
+%no bias estimation
 clear;
 %cal mag vector in n-cordinate
 data=textread('data.txt');
@@ -72,26 +73,25 @@ end
 q=myA2Q([roll,pitch,yaw]);
 
 %%
-x = [q,0,0,0]; % q, bias of gyro
+x = q; % q, bias of gyro
 
 %init recorder
 angleRecorder=zeros(size(acc,1),3);
 quatRecorder=zeros(size(acc,1),4);
-biasRecorder = zeros(size(acc,1),3);
 %set parameter
 g=-9.76;
-P=eye(7,7);
-Q=diag(([0.05 0.05 0.05 0.007 0.007 0.007]/57.3).^2);
-R=diag([40 40 40 200 200 200]);
+P=eye(4,4);
+Q=diag(([0.05 0.05 0.05]/57.3).^2);
+R=diag([4 4 4 20 20 20]);
 
 for n=1:size(acc,1)
     [angleRecorder(n,3),angleRecorder(n,2),angleRecorder(n,1)]=quat2angle(x(1:4));
     quatRecorder(n,:)=x(1:4);
-    biasRecorder(n,:) = x(5:7);
     
-    A=GetA(x, gyrRate(n,:),dT(n));
+    A=GetA(gyrRate(n,:),dT(n));
     G=GetG(x, dT(n));
-    x = INS_update(x, [gyrRate(n,:)-x(5:7),dT(n)]);
+%     x = (A * x')';
+    x = INS_update(x, [gyrRate(n,:),dT(n)]);
     P=A*P*A' + G*Q*G';
     
     H=GetH(x,MagReal,g);
@@ -102,7 +102,7 @@ for n=1:size(acc,1)
     Hq=[Cnb*[0;0;g];Cnb*MagReal'];%6*1
 
     x=x+(K*(obState'-Hq))';
-    P=(eye(7)-K*H)*P;
+    P=(eye(4)-K*H)*P;
     x(1:4)=x(1:4)/sqrt(x(1:4)*x(1:4)');
 end
 
@@ -117,12 +117,6 @@ hold on;
 plot(quatRecorder(:,2),'r');
 plot(quatRecorder(:,3),'g');
 plot(quatRecorder(:,4),'k');
-subplot(2,1,2);
-hold off;
-plot(biasRecorder(:,1));
-hold on;
-plot(biasRecorder(:,2),'r');
-plot(biasRecorder(:,3),'g');
 
 figure(2);hold off;
 subplot(2,1,1);hold off;
