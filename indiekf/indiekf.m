@@ -77,8 +77,9 @@ q = cnb2quat(cnb);
 % we always use column vector except library function
 x = [q; 0; 0; 0];
 P = diag([0.02 0.02 0.02 0.02 0.02 0.02]);
-sigr = 0.01;
-sigw = 0.002;
+sigr = 0.05/57.3;
+sigw = 0.007/57.3;
+R = diag([4 4 4 20 20 20]);
 
 w_k_1 = data(1,1:3)'/57.3;
 
@@ -119,20 +120,30 @@ for n = 1:size(acc,1)
     
     P = Phi*P*Phi' + Qd;
     
-    
     % update
-%     H = [skew(quat2cnb(x(1:4))*[0 0 -9.76]') zeros(3,3);
-%         skew(quat2cnb(x(1:4))*MagReal') zeros(3,3)];
-%     K = P*H'/(H*P*H' + sig
-%     H=GetH(x,MagReal,g);
-%     K = P*H'/(H*P*H'+R);
-%     obState=[acc(n,:),mag(n,:)];%1*6
-%     Cnb=Quat2Cnb(x(1:4));
-%     Hq=[Cnb*[0;0;g];Cnb*MagReal'];%6*1
-%     x = x+(K*(obState'-Hq))';
+    cnb = quat2cnb(x(1:4));
+    H = [skew(cnb*[0 0 -9.76]') zeros(3,3);
+        skew(cnb*MagReal') zeros(3,3)];
+    K = P*H'/(H*P*H'+R);
+    obState=[acc(n,:),mag(n,:)]';%1*6
+    Hq=[cnb*[0;0;-9.76];cnb*MagReal'];%6*1
+    
+    deltaX = K*(obState-Hq);
+    dq = deltaX(1:3)/2;
+    db = deltaX(4:6);
+    
+    if (dq'*dq) > 1
+        dq_hat_avg_1 = (1/sqrt(1 + (dq'*dq))) * [dq ; 1];	%(239)
+    else
+        dq_hat_avg_1 = [dq ; (sqrt(1 - (dq'*dq)))];		%(238)
+    end
+    q = multiplyQuaternion(dq_hat_avg_1, x(1:4));	%(240)
+    
+    x(1:4) = q;
+    x(5:7) = x(5:7) + db;
     w_k_1 = gyrRate(n,:)' - x(5:7);
-%     P=(eye(7)-K*H)*P;
-%     x(1:4)=x(1:4)/sqrt(x(1:4)*x(1:4)');
+    
+    P=(eye(6)-K*H)*P;
 end
 
 index=find(angleRecorder(:,3)<0);
@@ -152,3 +163,9 @@ grid on;
 hold on;
 plot(angleRecorder(:,2)*57.3,'r');
 plot(angleRecorder(:,3)*57.3,'g');
+subplot(2,1,2);
+hold off;
+plot(biasRecorder(:,1));
+hold on;
+plot(biasRecorder(:,2),'r');
+plot(biasRecorder(:,3),'g');

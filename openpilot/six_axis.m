@@ -79,11 +79,10 @@ angleRecorder=zeros(size(acc,1),3);
 quatRecorder=zeros(size(acc,1),4);
 biasRecorder = zeros(size(acc,1),3);
 %set parameter
-g=-9.75;
+g=-9.76;
 P=eye(7,7);
-Q=0.0012*eye(3);
-% R=diag([4 4 4 400 400 400]);
-R = diag([4 4 4]);
+Q=diag(([0.05 0.05 0.05 0.007 0.007 0.007]/57.3).^2);
+R=diag([40 40 40 200 200 200]);
 
 for n=1:size(acc,1)
     [angleRecorder(n,3),angleRecorder(n,2),angleRecorder(n,1)]=quat2angle(x(1:4));
@@ -97,12 +96,11 @@ for n=1:size(acc,1)
     
     H=GetH(x,MagReal,g);
     K = P*H'/(H*P*H'+R);
-%     obState=[acc(n,:),mag(n,:)];%1*6
-    obState = [acc(n,:)];
+    obState=[acc(n,:),mag(n,:)];%1*6
     
     Cnb=Quat2Cnb(x(1:4));
-%     Hq=[Cnb*[0;0;g];Cnb*MagReal'];%6*1
-    Hq = Cnb*[0;0;g];
+    Hq=[Cnb*[0;0;g];Cnb*MagReal'];%6*1
+
     x=x+(K*(obState'-Hq))';
     P=(eye(7)-K*H)*P;
     x(1:4)=x(1:4)/sqrt(x(1:4)*x(1:4)');
